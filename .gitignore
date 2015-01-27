@@ -1,0 +1,5 @@
+*.py[co]
+*~
+build/
+django_rdkit.egg-info/
+
