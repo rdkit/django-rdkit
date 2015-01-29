@@ -1,5 +1,6 @@
 *.py[co]
 *~
 build/
+dist/
 django_rdkit.egg-info/
 
