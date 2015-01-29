@@ -1,13 +1,22 @@
 #!/usr/bin/env python
+import os
+from setuptools import setup
 
-from setuptools import setup, find_packages
 
-setup(name='django-rdkit',
-      version='0.0.1',
-      description='',
-      #url='https://github.com/rvianello/django-rdkit',
-      packages = find_packages(exclude = [
-            'docs',
-            'docs.*',
-            ]),
-     )
+def get_packages(package):
+    """
+    Return root package and all sub-packages.
+    """
+    return [dirpath
+            for dirpath, dirnames, filenames in os.walk(package)
+            if os.path.exists(os.path.join(dirpath, '__init__.py'))]
+
+
+setup(
+    name='django-rdkit',
+    version='0.0.1',
+    description='',
+    #url='https://github.com/rvianello/django-rdkit',
+    packages = get_packages('django_rdkit'),
+    zip_safe=False,
+)
