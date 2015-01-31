@@ -111,7 +111,8 @@ class SameStructure(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s @= %s' % (lhs, rhs), params
+        #return '%s @= %s' % (lhs, rhs), params
+        return '%s <@ %s AND %s @> %s' % (lhs, rhs, lhs, rhs), params + params
 
 MoleculeField.register_lookup(SameStructure)
 
