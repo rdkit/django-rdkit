@@ -7,6 +7,10 @@ from rdkit import Chem
 from rdkit.Chem import Mol
 from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
 
+
+__all__ = ["MoleculeField", "BfpField", "SfpField",]
+ 
+
 class ChemField(Field):
 
     def __init__(self, verbose_name=None, chem_index=True, *args, **kwargs):
