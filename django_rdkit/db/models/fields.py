@@ -18,12 +18,33 @@ class ChemField(Field):
         kwargs['verbose_name'] = verbose_name
         super(ChemField, self).__init__(*args, **kwargs)
     
+    #def select_format(self, compiler, sql, params):
+    #    """
+    #    Custom format for select clauses. For example, GIS columns need to be
+    #    selected as AsText(table.col) on MySQL as the table.col data 
+    #    can't be used by Django.
+    #    """
+    #    return sql, params
+
     def deconstruct(self):
         name, path, args, kwargs = super(ChemField, self).deconstruct()
         # include chem_index if not the default value.
         if self.chem_index is not True:
             kwargs['chem_index'] = self.chem_index
         return name, path, args, kwargs
+
+    #def get_placeholder(self, value, compiler, connection):
+    #    """
+    #    Returns the placeholder for the geometry column for the
+    #    given value.
+    #    """
+    #    if hasattr(value, 'as_sql'):
+    #        # No geometry value used for F expression, substitute in
+    #        # the column name instead.
+    #        sql, _ = compiler.compile(value)
+    #        return sql
+    #    else:
+    #        return '%s'
 
 
 ##########################################
@@ -265,7 +286,7 @@ class TanimotoSimilar(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s %% %s' % (lhs, rhs), params
+        return '%s %%%% %s' % (lhs, rhs), params
 
 BfpField.register_lookup(TanimotoSimilar)
 SfpField.register_lookup(TanimotoSimilar)
