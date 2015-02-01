@@ -8,6 +8,12 @@ from rdkit.Chem import Mol
 from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
 
 
+from django_rdkit.db.models.descriptors import (
+    INTEGER_MOL_DESCRIPTORS,
+    FLOAT_MOL_DESCRIPTORS,
+)
+
+
 __all__ = ["MoleculeField", "BfpField", "SfpField",]
  
 
@@ -85,8 +91,8 @@ class MoleculeField(with_metaclass(SubfieldBase, ChemField)):
         "Perform preliminary non-db specific lookup checks and conversions"
         supported_lookup_types = (
             ['hassubstruct', 'issubstruct', 'exact',] +
-            _FLOAT_MOL_DESCRIPTORS +
-            _INTEGER_MOL_DESCRIPTORS
+            FLOAT_MOL_DESCRIPTORS +
+            INTEGER_MOL_DESCRIPTORS
         )
         if lookup_type in supported_lookup_types:
             return value
@@ -161,27 +167,7 @@ class IntegerDescriptor(DescriptorTransform):
         return IntegerField()
 
 
-_INTEGER_MOL_DESCRIPTORS = [
-    'hba', 
-    'hbd',
-    'numatoms',
-    'numheavyatoms',
-    'numrotatablebonds',
-    'numheteroatoms',
-    'numrings',
-    'numaromaticrings',
-    'numaliphaticrings',
-    'numsaturatedrings',
-    'numaromaticheterocycles',
-    'numaliphaticheterocycles',
-    'numsaturatedheterocycles',
-    'numaromaticcarbocycles',
-    'numaliphaticcarbocycles',
-    'numsaturatedcarbocycles',
-]
-
-
-for descr in _INTEGER_MOL_DESCRIPTORS:
+for descr in INTEGER_MOL_DESCRIPTORS:
     
     transform = type(
         'Mol{0}'.format(descr.upper()),
@@ -199,18 +185,7 @@ class FloatDescriptor(DescriptorTransform):
         return FloatField()
 
 
-_FLOAT_MOL_DESCRIPTORS = [
-    'amw',
-    'logp',
-    'tpsa',
-    'fractioncsp3',
-    'chi0v', 'chi1v', 'chi2v', 'chi3v', 'chi5v',
-    'chi0n', 'chi1n', 'chi2n', 'chi3n', 'chi5n',
-    'kappa1', 'kappa2', 'kappa3', 'kappa4',
-]
-
-
-for descr in _FLOAT_MOL_DESCRIPTORS:
+for descr in FLOAT_MOL_DESCRIPTORS:
     
     transform = type(
         'Mol{0}'.format(descr.upper()),
