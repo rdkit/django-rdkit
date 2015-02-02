@@ -1,14 +1,12 @@
 #from __future__ import unicode_literals
 
-from django.core.management import call_command
 from django.test import TestCase
 
-from django_rdkit.db.models import (
-    Q, Value, QMOL, MORGAN_FP, MORGANBV_FP,
-)
+from django_rdkit.db.models import *
 
 from .models import MoleculeModel, SfpModel, BfpModel
 from .molecules import SMILES_SAMPLE
+
 
 class MoleculeFieldTest(TestCase):
     
@@ -57,7 +55,20 @@ class MoleculeFieldTest(TestCase):
         objs = MoleculeModel.objects.filter(molecule__issubstruct='CC[N+]([O-])(CC)CCCN1c2ccccc2S(=O)c2ccccc21')
         self.assertEqual(objs.count(), 4)
 
+    def test_descriptor_AMW(self):
+
+        threshold = 250.
+        cnt1 = MoleculeModel.objects.filter(molecule__AMW__gt=threshold).count()
+        self.assertEqual(cnt1, 36)
         
+        objs = MoleculeModel.objects.annotate(amw=AMW('molecule'))
+        cnt2 = sum(1 for m in objs if m.amw > threshold)
+        self.assertEqual(cnt2 - cnt1, 0)
+
+        aggr = MoleculeModel.objects.aggregate(avg_amw=Avg(AMW('molecule')))
+        self.assertAlmostEqual(aggr['avg_amw'], 236.874, 3)
+
+                                                     
 class SfpFieldTest1(TestCase):
     
     def setUp(self):

@@ -8,10 +8,7 @@ from rdkit.Chem import Mol
 from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
 
 
-from django_rdkit.db.models.descriptors import (
-    INTEGER_MOL_DESCRIPTORS,
-    FLOAT_MOL_DESCRIPTORS,
-)
+from django_rdkit.db.models.descriptors import DESCRIPTOR_MIXINS
 
 
 __all__ = ["MoleculeField", "BfpField", "SfpField",]
@@ -91,8 +88,7 @@ class MoleculeField(with_metaclass(SubfieldBase, ChemField)):
         "Perform preliminary non-db specific lookup checks and conversions"
         supported_lookup_types = (
             ['hassubstruct', 'issubstruct', 'exact',] +
-            FLOAT_MOL_DESCRIPTORS +
-            INTEGER_MOL_DESCRIPTORS
+            [T.lookup_name for T in DESCRIPTOR_TRANFORMS]
         )
         if lookup_type in supported_lookup_types:
             return value
@@ -153,47 +149,22 @@ MoleculeField.register_lookup(SameStructure)
 
 class DescriptorTransform(Transform):
 
-    descriptor_name = None
-
     def as_sql(self, qn, connection):
         lhs, params = qn.compile(self.lhs)
-        return "mol_%s(%s)" % (self.descriptor_name, lhs), params
+        return "%s(%s)" % (self.function, lhs), params
     
 
-class IntegerDescriptor(DescriptorTransform):
-
-    @property
-    def output_field(self):
-        return IntegerField()
-
-
-for descr in INTEGER_MOL_DESCRIPTORS:
-    
-    transform = type(
-        'Mol{0}'.format(descr.upper()),
-        (IntegerDescriptor,),
-        { 'lookup_name': descr, 'descriptor_name': descr, },
-    )
-
-    MoleculeField.register_lookup(transform)
+DESCRIPTOR_TRANFORMS = [
+    type('{0}_Transform'.format(mixin.descriptor_name.upper()),
+         (mixin, DescriptorTransform,),
+         { 'lookup_name': mixin.descriptor_name.upper(), }
+     )
+    for mixin in DESCRIPTOR_MIXINS
+]
 
 
-class FloatDescriptor(DescriptorTransform):
-
-    @property
-    def output_field(self):
-        return FloatField()
-
-
-for descr in FLOAT_MOL_DESCRIPTORS:
-    
-    transform = type(
-        'Mol{0}'.format(descr.upper()),
-        (FloatDescriptor,),
-        { 'lookup_name': descr, 'descriptor_name': descr, },
-    )
-
-    MoleculeField.register_lookup(transform)
+for Transform in DESCRIPTOR_TRANFORMS:
+    MoleculeField.register_lookup(Transform)
 
 
 ########################################################

@@ -1,4 +1,6 @@
-INTEGER_MOL_DESCRIPTORS = [
+from django.db import models
+
+INTEGER_DESCRIPTORS = [
     'hba', 
     'hbd',
     'numatoms',
@@ -18,7 +20,7 @@ INTEGER_MOL_DESCRIPTORS = [
 ]
 
 
-FLOAT_MOL_DESCRIPTORS = [
+FLOAT_DESCRIPTORS = [
     'amw',
     'logp',
     'tpsa',
@@ -29,3 +31,20 @@ FLOAT_MOL_DESCRIPTORS = [
 ]
 
 
+def _make_mixin(name, field):
+    return type(
+        '{0}_Mixin'.format(name.upper()), 
+        (object,),
+        { 
+            'descriptor_name': name, 
+            'function': 'mol_{0}'.format(name),
+            'output_field': field, 
+        },
+    )
+
+
+DESCRIPTOR_MIXINS = (
+    [ _make_mixin(d, models.IntegerField()) for d in INTEGER_DESCRIPTORS ] +
+    [ _make_mixin(d, models.FloatField()) for d in FLOAT_DESCRIPTORS ]
+    )
+ 
