@@ -25,38 +25,28 @@ class MOL(models.Func):
     function = 'mol'
     output_field = MoleculeField()
 
-    def __init__(self, *expressions, **extra):
-      if len(expressions) != 1:
-          raise ValueError('expressions must have exacly 1 element')
-      super(MOL, self).__init__(*expressions, **extra)
-
 
 class QMOL(models.Func):
     function = 'qmol'
 
-    def __init__(self, *expressions, **extra):
-      if len(expressions) != 1:
-          raise ValueError('expressions must have exacly 1 element')
-      super(QMOL, self).__init__(*expressions, **extra)
 
-
-class MORGAN_FP(models.Func):
-    function = 'morgan_fp'
-    output_field = SfpField()
-
-    def __init__(self, *expressions, **extra):
-      if len(expressions) > 2:
-          raise ValueError('expressions must have at most 2 elements')
-      super(MORGAN_FP, self).__init__(*expressions, **extra)
-
-
-class MORGANBV_FP(models.Func):
-    function = 'morganbv_fp'
-    output_field = BfpField()
-
-    def __init__(self, *expressions, **extra):
-      if len(expressions) > 2:
-          raise ValueError('expressions must have at most 2 elements')
-      super(MORGANBV_FP, self).__init__(*expressions, **extra)
+for fingerprint, fieldkls in [('morgan_fp', SfpField),
+                              ('morganbv_fp', BfpField),
+                              ('featmorgan_fp', SfpField),
+                              ('featmorganbv_fp', BfpField),
+                              ('rdkit_fp', BfpField),
+                              ('atompair_fp', SfpField),
+                              ('atompairbv_fp', BfpField),
+                              ('torsion_fp', SfpField),
+                              ('torsionbv_fp', BfpField),
+                              ('layered_fp', BfpField),
+                              ('maccs_fp', BfpField),
+                              ('tanimoto_sml', models.FloatField),
+                              ('dice_sml', models.FloatField),
+                          ]:
+    F = type(fingerprint.upper(), (models.Func,), 
+             { 'function': fingerprint, 'output_field': fieldkls(),})
+    setattr(module, F.__name__, F)
+    __all__.append(F.__name__)
 
 
