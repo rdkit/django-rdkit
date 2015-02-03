@@ -42,6 +42,9 @@ for fingerprint, fieldkls in [('morgan_fp', SfpField),
                               ('maccs_fp', BfpField),
                               ('tanimoto_sml', models.FloatField),
                               ('dice_sml', models.FloatField),
+                              ('tversky_sml', models.FloatField),
+                              ('tanimoto_dist', models.FloatField),
+                              ('dice_dist', models.FloatField),
                           ]:
     F = type(fingerprint.upper(), (models.Func,), 
              { 'function': fingerprint, 'output_field': fieldkls(),})
