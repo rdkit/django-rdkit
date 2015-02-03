@@ -7,7 +7,6 @@ from django_rdkit.db.models.fields import *
 
 __all__ = [ 
     "MOL", "QMOL", 
-    "MORGAN_FP", "MORGANBV_FP",
 ]
 
 module = sys.modules[__name__]
