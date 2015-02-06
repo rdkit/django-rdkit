@@ -76,7 +76,7 @@ class MoleculeField(with_metaclass(SubfieldBase, ChemField)):
         # convert the Molecule instance to the value used by the 
         # db driver
         if isinstance(value, Mol):
-            return Chem.MolToSmiles(value, isomericSmiles=True, canonical=False)
+            return Chem.MolToSmiles(value, isomericSmiles=True)
             
         return value
 
