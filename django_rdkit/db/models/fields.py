@@ -60,24 +60,39 @@ class MoleculeField(with_metaclass(SubfieldBase, ChemField)):
     def db_type(self, connection):
         return 'mol'
     
+    def get_placeholder(self, value, compiler, connection):
+        if hasattr(value, 'as_sql'):
+            # No value used for expressions, substitute in
+            # the column name instead.
+            sql, _ = compiler.compile(value)
+            return sql
+        else:
+            return 'mol_from_pkl(%s)'
+
+    def select_format(self, compiler, sql, params):
+        return 'mol_to_pkl(%s)' % sql, params
+
     def to_python(self, value):
         # consider setting the SubfieldBase metaclass
 
         if isinstance(value, Mol):
             return value
-
-        # The string case. 
-        value = Chem.MolFromSmiles(value)
-        if not value:
+        elif isinstance(value, basestring):
+            # The string case.
+            value = Chem.MolFromSmiles(str(value))
+        elif value:
+            value = Mol(str(value))
+        else:
             raise ValidationError("Invalid input for a Mol instance")
         return value
 
     def get_prep_value(self, value):
         # convert the Molecule instance to the value used by the 
         # db driver
+        if isinstance(value, basestring):
+            value = Chem.MolFromSmiles(str(value))
         if isinstance(value, Mol):
-            return Chem.MolToSmiles(value, isomericSmiles=True)
-            
+            value = buffer(value.ToBinary())
         return value
 
     # don't reimplement db-specific preparation of query values for now
