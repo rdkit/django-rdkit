@@ -7,9 +7,7 @@ from django.db import models
 from django_rdkit.db.models.descriptors import DESCRIPTOR_MIXINS
 from django_rdkit.db.models.fields import *
 
-__all__ = [ 
-    "MOL", "QMOL", 
-]
+__all__ = []
 
 module = sys.modules[__name__]
 
@@ -19,16 +17,29 @@ for mixin in DESCRIPTOR_MIXINS:
     __all__.append(F.__name__)
 
 
-class MOL(models.Func):
-    # the default template, resolving to mol(%(expressions)s)
-    # should also work since the type name can be used as a function
-    # template = '%(expressions)s::mol'
-    function = 'mol'
-    output_field = MoleculeField()
+for molconverter, fieldkls in [('mol', MoleculeField),
+                               ('qmol',  MoleculeField),
+                               ('mol_from_smiles', MoleculeField),
+                               ('mol_from_smarts', MoleculeField),
+                               ('mol_from_ctab', MoleculeField),
+                               ('mol_to_smiles', models.CharField),
+                               ('mol_to_smarts', models.CharField),
+                               ('mol_to_ctab', models.TextField),
+                               ('mol_inchi', models.TextField),
+                               ('mol_inchikey', models.TextField),
+                               ('mol_formula', models.TextField),
+                           ]:
+    F = type(str(molconverter.upper()), (models.Func,), 
+             { 'function': molconverter, 'output_field': fieldkls(),})
+    setattr(module, F.__name__, F)
+    __all__.append(F.__name__)
 
 
-class QMOL(models.Func):
-    function = 'qmol'
+for validator in ['is_valid_smiles', 'is_valid_smarts', 'is_valid_ctab']:
+    F = type(str(validator.upper()), (models.Func,), 
+             { 'function': validator, 'output_field': models.BooleanField(),})
+    setattr(module, F.__name__, F)
+    __all__.append(F.__name__)
 
 
 for fingerprint, fieldkls in [('morgan_fp', SfpField),
