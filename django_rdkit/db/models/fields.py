@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
-from django.db.models import SubfieldBase, Lookup, Transform
+from django.db.models import Lookup, Transform
 from django.db.models.fields import *
 
 from rdkit import Chem
@@ -55,7 +55,7 @@ class ChemField(Field):
 ##########################################
 # Molecule Field
 
-class MoleculeField(six.with_metaclass(SubfieldBase, ChemField)):
+class MoleculeField(ChemField):
 
     description = _("Molecule")
 
@@ -74,17 +74,21 @@ class MoleculeField(six.with_metaclass(SubfieldBase, ChemField)):
     def select_format(self, compiler, sql, params):
         return 'mol_to_pkl(%s)' % sql, params
 
+    def from_db_value(self, value, connection, context):
+        if value is None:
+            return value
+        return Mol(bytes(value))
+
     def to_python(self, value):
-        if isinstance(value, Mol):
+        if value is None or isinstance(value, Mol):
             return value
         elif isinstance(value, six.string_types):
             # The string case. A SMILES is assumed.
-            value = Chem.MolFromSmiles(str(value))
+            return Chem.MolFromSmiles(str(value))
         elif isinstance(value, six.buffer_types):
-            value = Mol(bytes(value))
+            return Mol(bytes(value))
         else:
             raise ValidationError("Invalid input for a Mol instance")
-        return value
 
     def get_prep_value(self, value):
         # convert the Molecule instance to the value used by the 
@@ -186,7 +190,7 @@ for Transform in DESCRIPTOR_TRANFORMS:
 ########################################################
 # Binary Fingerprint Field
 
-class BfpField(six.with_metaclass(SubfieldBase, ChemField)):
+class BfpField(ChemField):
 
     description = _("Binary Fingerprint")
 
@@ -213,7 +217,7 @@ class BfpField(six.with_metaclass(SubfieldBase, ChemField)):
 ########################################################
 # Sparse Integer Vector Fingerprint Field
 
-class SfpField(six.with_metaclass(SubfieldBase, ChemField)):
+class SfpField(ChemField):
 
     description = _("Sparse Integer Vector Fingerprint")
 
