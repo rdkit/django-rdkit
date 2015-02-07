@@ -1,4 +1,4 @@
-#from __future__ import unicode_literals
+from __future__ import unicode_literals
 
 SMILES_SAMPLE = (
     'NN=C(c1ccccc1)c1ccccc1',

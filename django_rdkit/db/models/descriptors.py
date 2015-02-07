@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.db import models
 
 INTEGER_DESCRIPTORS = [
@@ -33,7 +35,7 @@ FLOAT_DESCRIPTORS = [
 
 def _make_mixin(name, field):
     return type(
-        '{0}_Mixin'.format(name.upper()), 
+        str('{0}_Mixin'.format(name.upper())), 
         (object,),
         { 
             'descriptor_name': name, 

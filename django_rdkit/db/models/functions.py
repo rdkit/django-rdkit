@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import sys
 
 from django.db import models
@@ -12,7 +14,7 @@ __all__ = [
 module = sys.modules[__name__]
 
 for mixin in DESCRIPTOR_MIXINS:
-    F = type(mixin.descriptor_name.upper(), (mixin, models.Func,), {})
+    F = type(str(mixin.descriptor_name.upper()), (mixin, models.Func,), {})
     setattr(module, F.__name__, F)
     __all__.append(F.__name__)
 
@@ -46,7 +48,7 @@ for fingerprint, fieldkls in [('morgan_fp', SfpField),
                               ('tanimoto_dist', models.FloatField),
                               ('dice_dist', models.FloatField),
                           ]:
-    F = type(fingerprint.upper(), (models.Func,), 
+    F = type(str(fingerprint.upper()), (models.Func,), 
              { 'function': fingerprint, 'output_field': fieldkls(),})
     setattr(module, F.__name__, F)
     __all__.append(F.__name__)

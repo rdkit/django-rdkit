@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.db.backends.postgresql_psycopg2.schema import DatabaseSchemaEditor as Psycopg2SchemaEditor
 
 class DatabaseSchemaEditor(Psycopg2SchemaEditor):

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper as Psycopg2DatabaseWrapper
 from django_rdkit.db.backends.postgresql_psycopg2.creation import DatabaseCreation
 #from django_rdkit.db.backends.postgresql_psycopg2.introspection import DatabaseIntrospection
