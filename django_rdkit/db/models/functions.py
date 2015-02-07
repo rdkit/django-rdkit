@@ -17,11 +17,11 @@ for mixin in DESCRIPTOR_MIXINS:
     __all__.append(F.__name__)
 
 
-for molconverter, fieldkls in [('mol', MoleculeField),
-                               ('qmol',  MoleculeField),
-                               ('mol_from_smiles', MoleculeField),
-                               ('mol_from_smarts', MoleculeField),
-                               ('mol_from_ctab', MoleculeField),
+for molconverter, fieldkls in [('mol', MolField),
+                               ('qmol',  MolField),
+                               ('mol_from_smiles', MolField),
+                               ('mol_from_smarts', MolField),
+                               ('mol_from_ctab', MolField),
                                ('mol_to_smiles', models.CharField),
                                ('mol_to_smarts', models.CharField),
                                ('mol_to_ctab', models.TextField),

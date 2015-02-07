@@ -13,7 +13,7 @@ from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
 from django_rdkit.db.models.descriptors import DESCRIPTOR_MIXINS
 
 
-__all__ = ["MoleculeField", "BfpField", "SfpField",]
+__all__ = ["MolField", "BfpField", "SfpField",]
  
 
 class ChemField(Field):
@@ -55,7 +55,7 @@ class ChemField(Field):
 ##########################################
 # Molecule Field
 
-class MoleculeField(ChemField):
+class MolField(ChemField):
 
     description = _("Molecule")
 
@@ -122,7 +122,7 @@ class MoleculeField(ChemField):
 
 
 ###############################################################
-# MoleculeField lookup operations, substruct and exact searches
+# MolField lookup operations, substruct and exact searches
 
 class HasSubstruct(Lookup):
 
@@ -134,7 +134,7 @@ class HasSubstruct(Lookup):
         params = lhs_params + rhs_params
         return '%s @> %s' % (lhs, rhs), params
 
-MoleculeField.register_lookup(HasSubstruct)
+MolField.register_lookup(HasSubstruct)
 
 
 class IsSubstruct(Lookup):
@@ -147,7 +147,7 @@ class IsSubstruct(Lookup):
         params = lhs_params + rhs_params
         return '%s <@ %s' % (lhs, rhs), params
 
-MoleculeField.register_lookup(IsSubstruct)
+MolField.register_lookup(IsSubstruct)
 
 
 class SameStructure(Lookup):
@@ -161,11 +161,11 @@ class SameStructure(Lookup):
         #return '%s @= %s' % (lhs, rhs), params
         return '%s <@ %s AND %s @> %s' % (lhs, rhs, lhs, rhs), params + params
 
-MoleculeField.register_lookup(SameStructure)
+MolField.register_lookup(SameStructure)
 
 
 ##########################################
-# MoleculeField transforms and descriptors
+# MolField transforms and descriptors
 
 class DescriptorTransform(Transform):
 
@@ -184,7 +184,7 @@ DESCRIPTOR_TRANFORMS = [
 
 
 for Transform in DESCRIPTOR_TRANFORMS:
-    MoleculeField.register_lookup(Transform)
+    MolField.register_lookup(Transform)
 
 
 ########################################################
@@ -197,6 +197,9 @@ class BfpField(ChemField):
     def db_type(self, connection):
         return 'bfp'
     
+    # bfp_to_binary_text(bfp)
+    # bfp_from_binary_text(bytea)
+
     #def to_python(self, value):
     #    return value
 

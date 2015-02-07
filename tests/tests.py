@@ -4,11 +4,11 @@ from django.test import TestCase
 
 from django_rdkit.db.models import *
 
-from .models import MoleculeModel, SfpModel, BfpModel
+from .models import *
 from .molecules import SMILES_SAMPLE
 
 
-class MoleculeFieldTest(TestCase):
+class MolFieldTest(TestCase):
     
     def setUp(self):
         for smiles in SMILES_SAMPLE:

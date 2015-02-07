@@ -4,7 +4,7 @@ from django_rdkit.db import models
 
 class MoleculeModel(models.Model):
 
-    molecule = models.MoleculeField()
+    molecule = models.MolField()
 
 
 class SfpModel(models.Model):
@@ -19,7 +19,7 @@ class BfpModel(models.Model):
 
 #class TestModel(models.Model):#
 #
-#    molecule = models.MoleculeField()
+#    molecule = models.MolField()
 #    sfp = models.SfpField()
 #    bfb = models.BfpField()
 
