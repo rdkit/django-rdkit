@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=256)),
-                ('molecule', django_rdkit.db.models.fields.MoleculeField()),
+                ('molecule', django_rdkit.db.models.fields.MolField()),
             ],
         ),
     ]
