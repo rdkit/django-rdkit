@@ -30,14 +30,14 @@ class DatabaseSchemaEditor(Psycopg2SchemaEditor):
 
     def create_model(self, model):
         super(DatabaseSchemaEditor, self).create_model(model)
-        # Create geometry columns
+        # create a gist index for ChemFields
         for sql in self.chem_sql:
             self.execute(sql)
         self.chem_sql = []
 
     def add_field(self, model, field):
         super(DatabaseSchemaEditor, self).add_field(model, field)
-        # Create geometry columns
+        #  create a gist index for ChemFields
         for sql in self.chem_sql:
             self.execute(sql)
         self.chem_sql = []
