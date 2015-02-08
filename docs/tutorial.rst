@@ -1,4 +1,5 @@
-$ createdb -T template_rdkit django_rdkit_tutorial
+
+$ createdb django_rdkit_tutorial
 
 $ django-admin startproject tutorial
 
