@@ -17,20 +17,21 @@ for mixin in DESCRIPTOR_MIXINS:
     __all__.append(F.__name__)
 
 
-for molconverter, fieldkls in [('mol', MolField),
-                               ('qmol',  MolField),
-                               ('mol_from_smiles', MolField),
-                               ('mol_from_smarts', MolField),
-                               ('mol_from_ctab', MolField),
-                               ('mol_to_smiles', models.CharField),
-                               ('mol_to_smarts', models.CharField),
-                               ('mol_to_ctab', models.TextField),
-                               ('mol_inchi', models.TextField),
-                               ('mol_inchikey', models.TextField),
-                               ('mol_formula', models.TextField),
-                           ]:
-    F = type(str(molconverter.upper()), (models.Func,), 
-             { 'function': molconverter, 'output_field': fieldkls(),})
+for name, function, fieldkls in [
+        ('MOL', 'mol', MolField),
+        ('MOL_FROM_SMILES', 'mol_from_smiles', MolField),
+        ('MOL_FROM_SMARTS', 'mol_from_smarts', MolField),
+        ('MOL_FROM_CTAB', 'mol_from_ctab', MolField),
+        ('QMOL', 'qmol',  MolField),
+        ('SMILES', 'mol_to_smiles', models.CharField),
+        ('SMARTS', 'mol_to_smarts', models.CharField),
+        ('CTAB', 'mol_to_ctab', models.TextField),
+        ('INCHI', 'mol_inchi', models.TextField),
+        ('INCHIKEY', 'mol_inchikey', models.TextField),
+        ('FORMULA', 'mol_formula', models.TextField),
+        ]:
+    F = type(str(name), (models.Func,), 
+             { 'function': function, 'output_field': fieldkls(),})
     setattr(module, F.__name__, F)
     __all__.append(F.__name__)
 
