@@ -4,6 +4,8 @@ from django.test import TestCase
 
 from django_rdkit.db.models import *
 
+from rdkit.Chem import AllChem as Chem
+
 from .models import *
 from .molecules import SMILES_SAMPLE
 
@@ -68,44 +70,6 @@ class MolFieldTest(TestCase):
         aggr = MoleculeModel.objects.aggregate(avg_amw=Avg(AMW('molecule')))
         self.assertAlmostEqual(aggr['avg_amw'], 236.874, 3)
 
-                                                     
-class SfpFieldTest1(TestCase):
-    
-    def setUp(self):
-        for smiles in SMILES_SAMPLE:
-            record = SfpModel.objects.create()
-            record.sfp = MORGAN_FP(Value(smiles))
-            record.save()
-
-    def test_tanimoto_lookup(self):
-        query_sfp = MORGAN_FP(Value('CCN1c2ccccc2Sc2ccccc21'))
-        objs = SfpModel.objects.filter(sfp__tanimoto=query_sfp)
-        self.assertEqual(objs.count(), 2)
-
-    def test_dice_lookup(self):
-        query_sfp = MORGAN_FP(Value('CCN1c2ccccc2Sc2ccccc21'))
-        objs = SfpModel.objects.filter(sfp__dice=query_sfp)
-        self.assertEqual(objs.count(), 15)
-
-        
-class SfpFieldTest2(TestCase):
-    
-    def setUp(self):
-        for smiles in SMILES_SAMPLE:
-            record = SfpModel.objects.create()
-            record.sfp = MORGAN_FP(Value(smiles), Value(5))
-            record.save()
-
-    def test_tanimoto_lookup(self):
-        query_sfp = MORGAN_FP(Value('CCN1c2ccccc2Sc2ccccc21'), Value(5))
-        objs = SfpModel.objects.filter(sfp__tanimoto=query_sfp)
-        self.assertEqual(objs.count(), 2)
-
-    def test_dice_lookup(self):
-        query_sfp = MORGAN_FP(Value('CCN1c2ccccc2Sc2ccccc21'), Value(5))
-        objs = SfpModel.objects.filter(sfp__dice=query_sfp)
-        self.assertEqual(objs.count(), 2)
-
 
 class BfpFieldTest1(TestCase):
     
@@ -142,6 +106,62 @@ class BfpFieldTest2(TestCase):
     def test_dice_lookup(self):
         query_bfp = MORGANBV_FP(Value('CCN1c2ccccc2Sc2ccccc21'), Value(3))
         objs = BfpModel.objects.filter(bfp__dice=query_bfp)
+        self.assertEqual(objs.count(), 2)
+
+
+class BfpFieldTest3(TestCase):
+
+    def test_pkl_io(self):
+        bfps = {}
+        for smiles in SMILES_SAMPLE:
+            mol = Chem.MolFromSmiles(smiles)
+            bfp = Chem.GetMorganFingerprintAsBitVect(mol, 2, 512)
+            obj = BfpModel.objects.create(bfp=bfp)
+            bfps[obj.pk] = bfp
+
+        for obj in BfpModel.objects.all():
+            self.assertTrue(obj.pk in bfps)
+            ibfp = bfps[obj.pk]
+            obfp = obj.bfp
+            self.assertEqual(list(ibfp.GetOnBits()),
+                             list(obfp.GetOnBits()))
+
+
+class SfpFieldTest1(TestCase):
+    
+    def setUp(self):
+        for smiles in SMILES_SAMPLE:
+            record = SfpModel.objects.create()
+            record.sfp = MORGAN_FP(Value(smiles))
+            record.save()
+
+    def test_tanimoto_lookup(self):
+        query_sfp = MORGAN_FP(Value('CCN1c2ccccc2Sc2ccccc21'))
+        objs = SfpModel.objects.filter(sfp__tanimoto=query_sfp)
+        self.assertEqual(objs.count(), 2)
+
+    def test_dice_lookup(self):
+        query_sfp = MORGAN_FP(Value('CCN1c2ccccc2Sc2ccccc21'))
+        objs = SfpModel.objects.filter(sfp__dice=query_sfp)
+        self.assertEqual(objs.count(), 15)
+
+        
+class SfpFieldTest2(TestCase):
+    
+    def setUp(self):
+        for smiles in SMILES_SAMPLE:
+            record = SfpModel.objects.create()
+            record.sfp = MORGAN_FP(Value(smiles), Value(5))
+            record.save()
+
+    def test_tanimoto_lookup(self):
+        query_sfp = MORGAN_FP(Value('CCN1c2ccccc2Sc2ccccc21'), Value(5))
+        objs = SfpModel.objects.filter(sfp__tanimoto=query_sfp)
+        self.assertEqual(objs.count(), 2)
+
+    def test_dice_lookup(self):
+        query_sfp = MORGAN_FP(Value('CCN1c2ccccc2Sc2ccccc21'), Value(5))
+        objs = SfpModel.objects.filter(sfp__dice=query_sfp)
         self.assertEqual(objs.count(), 2)
 
 

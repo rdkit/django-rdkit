@@ -7,6 +7,7 @@ from django.db.models.fields import *
 
 from rdkit import Chem
 from rdkit.Chem import Mol
+from rdkit import DataStructs
 from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
 
 
@@ -197,14 +198,37 @@ class BfpField(ChemField):
     def db_type(self, connection):
         return 'bfp'
     
-    # bfp_to_binary_text(bfp)
-    # bfp_from_binary_text(bytea)
+    def get_placeholder(self, value, compiler, connection):
+        if hasattr(value, 'as_sql'):
+            # No value used for expressions, substitute in
+            # the column name instead.
+            sql, _ = compiler.compile(value)
+            return sql
+        else:
+            return 'bfp_from_binary_text(%s)'
 
-    #def to_python(self, value):
-    #    return value
+    def select_format(self, compiler, sql, params):
+        return 'bfp_to_binary_text(%s)' % sql, params
 
-    #def get_prep_value(self, value):
-    #    return value
+    def from_db_value(self, value, connection, context):
+        if value is None:
+            return value
+        return DataStructs.CreateFromBinaryText(bytes(value))
+
+    def to_python(self, value):
+        if value is None or isinstance(value, ExplicitBitVect):
+            return value
+        elif isinstance(value, six.buffer_types):
+            return DataStructs.CreateFromBinaryText(bytes(value))
+        else:
+            raise ValidationError("Invalid input for a Bfp instance")
+
+    def get_prep_value(self, value):
+        # convert the ExplicitBitVect instance to the value used by the 
+        # db driver
+        if isinstance(value, ExplicitBitVect):
+            value = six.memoryview(DataStructs.BitVectToBinaryText(value))
+        return value
 
     def get_prep_lookup(self, lookup_type, value):
         if lookup_type in ['tanimoto', 'dice']:
