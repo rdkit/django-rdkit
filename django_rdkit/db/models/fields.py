@@ -231,7 +231,9 @@ class BfpField(ChemField):
         return value
 
     def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in ['tanimoto', 'dice']:
+        if lookup_type in [
+                'lt', 'lte', 'exact', 'gte', 'gt', 'ne', 
+                'tanimoto', 'dice']:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
@@ -258,7 +260,9 @@ class SfpField(ChemField):
     #    return value
 
     def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in ['tanimoto', 'dice']:
+        if lookup_type in [
+                'lt', 'lte', 'exact', 'gte', 'gt', 'ne', 
+                'tanimoto', 'dice']:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
@@ -281,6 +285,7 @@ class TanimotoSimilar(Lookup):
         params = lhs_params + rhs_params
         return '%s %%%% %s' % (lhs, rhs), params
 
+
 BfpField.register_lookup(TanimotoSimilar)
 SfpField.register_lookup(TanimotoSimilar)
 
@@ -295,8 +300,24 @@ class DiceSimilar(Lookup):
         params = lhs_params + rhs_params
         return '%s # %s' % (lhs, rhs), params
 
+
 BfpField.register_lookup(DiceSimilar)
 SfpField.register_lookup(DiceSimilar)
+
+
+class NotEqual(Lookup):
+
+    lookup_name = 'ne'
+
+    def as_sql(self, qn, connection):
+        lhs, lhs_params = self.process_lhs(qn, connection)
+        rhs, rhs_params = self.process_rhs(qn, connection)
+        params = lhs_params + rhs_params
+        return '%s <> %s' % (lhs, rhs), params
+
+
+BfpField.register_lookup(NotEqual)
+SfpField.register_lookup(NotEqual)
 
 
 
