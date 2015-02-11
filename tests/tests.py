@@ -60,7 +60,7 @@ class MolFieldTest(TestCase):
     def test_descriptor_AMW(self):
 
         threshold = 250.
-        cnt1 = MoleculeModel.objects.filter(molecule__AMW__gt=threshold).count()
+        cnt1 = MoleculeModel.objects.filter(molecule__amw__gt=threshold).count()
         self.assertEqual(cnt1, 36)
         
         objs = MoleculeModel.objects.annotate(amw=AMW('molecule'))

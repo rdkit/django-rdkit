@@ -178,7 +178,7 @@ class DescriptorTransform(Transform):
 DESCRIPTOR_TRANFORMS = [
     type(str('{0}_Transform'.format(mixin.descriptor_name.upper())),
          (mixin, DescriptorTransform,),
-         { 'lookup_name': mixin.descriptor_name.upper(), }
+         { 'lookup_name': mixin.descriptor_name, }
      )
     for mixin in DESCRIPTOR_MIXINS
 ]
