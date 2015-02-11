@@ -11,9 +11,6 @@ from rdkit import DataStructs
 from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
 
 
-from django_rdkit.db.models.descriptors import DESCRIPTOR_MIXINS
-
-
 __all__ = ["MolField", "BfpField", "SfpField",]
  
 
@@ -122,72 +119,6 @@ class MolField(ChemField):
     #    return value
 
 
-###############################################################
-# MolField lookup operations, substruct and exact searches
-
-class HasSubstruct(Lookup):
-
-    lookup_name = 'hassubstruct'
-
-    def as_sql(self, qn, connection):
-        lhs, lhs_params = self.process_lhs(qn, connection)
-        rhs, rhs_params = self.process_rhs(qn, connection)
-        params = lhs_params + rhs_params
-        return '%s @> %s' % (lhs, rhs), params
-
-MolField.register_lookup(HasSubstruct)
-
-
-class IsSubstruct(Lookup):
-
-    lookup_name = 'issubstruct'
-
-    def as_sql(self, qn, connection):
-        lhs, lhs_params = self.process_lhs(qn, connection)
-        rhs, rhs_params = self.process_rhs(qn, connection)
-        params = lhs_params + rhs_params
-        return '%s <@ %s' % (lhs, rhs), params
-
-MolField.register_lookup(IsSubstruct)
-
-
-class SameStructure(Lookup):
-
-    lookup_name = 'exact'
-
-    def as_sql(self, qn, connection):
-        lhs, lhs_params = self.process_lhs(qn, connection)
-        rhs, rhs_params = self.process_rhs(qn, connection)
-        params = lhs_params + rhs_params
-        #return '%s @= %s' % (lhs, rhs), params
-        return '%s <@ %s AND %s @> %s' % (lhs, rhs, lhs, rhs), params + params
-
-MolField.register_lookup(SameStructure)
-
-
-##########################################
-# MolField transforms and descriptors
-
-class DescriptorTransform(Transform):
-
-    def as_sql(self, qn, connection):
-        lhs, params = qn.compile(self.lhs)
-        return "%s(%s)" % (self.function, lhs), params
-    
-
-DESCRIPTOR_TRANFORMS = [
-    type(str('{0}_Transform'.format(mixin.descriptor_name.upper())),
-         (mixin, DescriptorTransform,),
-         { 'lookup_name': mixin.descriptor_name, }
-     )
-    for mixin in DESCRIPTOR_MIXINS
-]
-
-
-for Transform in DESCRIPTOR_TRANFORMS:
-    MolField.register_lookup(Transform)
-
-
 ########################################################
 # Binary Fingerprint Field
 
@@ -270,6 +201,128 @@ class SfpField(ChemField):
     #    if not prepared:
     #        value = self.get_prep_lookup(lookup_type, value)
     #    return value
+
+
+###############################################################
+# MolField lookup operations, substruct and exact searches
+
+class HasSubstruct(Lookup):
+
+    lookup_name = 'hassubstruct'
+
+    def as_sql(self, qn, connection):
+        lhs, lhs_params = self.process_lhs(qn, connection)
+        rhs, rhs_params = self.process_rhs(qn, connection)
+        params = lhs_params + rhs_params
+        return '%s @> %s' % (lhs, rhs), params
+
+MolField.register_lookup(HasSubstruct)
+
+
+class IsSubstruct(Lookup):
+
+    lookup_name = 'issubstruct'
+
+    def as_sql(self, qn, connection):
+        lhs, lhs_params = self.process_lhs(qn, connection)
+        rhs, rhs_params = self.process_rhs(qn, connection)
+        params = lhs_params + rhs_params
+        return '%s <@ %s' % (lhs, rhs), params
+
+MolField.register_lookup(IsSubstruct)
+
+
+class SameStructure(Lookup):
+
+    lookup_name = 'exact'
+
+    def as_sql(self, qn, connection):
+        lhs, lhs_params = self.process_lhs(qn, connection)
+        rhs, rhs_params = self.process_rhs(qn, connection)
+        params = lhs_params + rhs_params
+        #return '%s @= %s' % (lhs, rhs), params
+        return '%s <@ %s AND %s @> %s' % (lhs, rhs, lhs, rhs), params + params
+
+MolField.register_lookup(SameStructure)
+
+
+##########################################
+# MolField transforms and descriptors
+
+DESCRIPTORS = [
+    ('hba', IntegerField),
+    ('hbd', IntegerField),
+    ('numatoms', IntegerField),
+    ('numheavyatoms', IntegerField),
+    ('numrotatablebonds', IntegerField),
+    ('numheteroatoms', IntegerField),
+    ('numrings', IntegerField),
+    ('numaromaticrings', IntegerField),
+    ('numaliphaticrings', IntegerField),
+    ('numsaturatedrings', IntegerField),
+    ('numaromaticheterocycles', IntegerField),
+    ('numaliphaticheterocycles', IntegerField),
+    ('numsaturatedheterocycles', IntegerField),
+    ('numaromaticcarbocycles', IntegerField),
+    ('numaliphaticcarbocycles', IntegerField),
+    ('numsaturatedcarbocycles', IntegerField),
+    ('amw', FloatField),
+    ('logp', FloatField),
+    ('tpsa', FloatField),
+    ('fractioncsp3', FloatField),
+    ('chi0v', FloatField),
+    ('chi1v', FloatField),
+    ('chi2v', FloatField),
+    ('chi3v', FloatField),
+    ('chi5v', FloatField),
+    ('chi0n', FloatField),
+    ('chi1n', FloatField),
+    ('chi2n', FloatField),
+    ('chi3n', FloatField),
+    ('chi5n', FloatField),
+    ('kappa1', FloatField),
+    ('kappa2', FloatField),
+    ('kappa3', FloatField),
+    ('kappa4', FloatField),
+    ('murckoscaffold', MolField),
+]
+
+
+def make_mixin(name, field):
+    return type(
+        str('{0}_Mixin'.format(name.upper())), 
+        (object,),
+        { 
+            'descriptor_name': name, 
+            'function': 'mol_{0}'.format(name),
+            'output_field': field, 
+        },
+    )
+
+
+DESCRIPTOR_MIXINS = [
+    make_mixin(d, fieldkls()) for d, fieldkls in DESCRIPTORS 
+]
+
+
+class DescriptorTransform(Transform):
+
+    def as_sql(self, qn, connection):
+        lhs, params = qn.compile(self.lhs)
+        return "%s(%s)" % (self.function, lhs), params
+    
+
+DESCRIPTOR_TRANFORMS = [
+    type(str('{0}_Transform'.format(mixin.descriptor_name.upper())),
+         (mixin, DescriptorTransform,),
+         { 'lookup_name': mixin.descriptor_name, }
+     )
+    for mixin in DESCRIPTOR_MIXINS
+]
+
+
+for Transform in DESCRIPTOR_TRANFORMS:
+    MolField.register_lookup(Transform)
 
 
 ####################################################################

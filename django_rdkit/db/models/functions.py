@@ -5,8 +5,8 @@ import sys
 from django.db import models
 from django.db.models.expressions import Expression
 
-from django_rdkit.db.models.descriptors import DESCRIPTOR_MIXINS
 from django_rdkit.db.models.fields import *
+from django_rdkit.db.models.fields import DESCRIPTOR_MIXINS
 
 __all__ = []
 
