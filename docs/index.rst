@@ -14,6 +14,7 @@ Contents:
    introduction
    database_setup
    fields
+   lookups
 
 Indices and tables
 ==================
