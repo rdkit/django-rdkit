@@ -72,7 +72,7 @@ class MolField(ChemField):
     def select_format(self, compiler, sql, params):
         return 'mol_to_pkl(%s)' % sql, params
 
-    def from_db_value(self, value, connection, context):
+    def from_db_value(self, value, expression, connection, context):
         if value is None:
             return value
         return Mol(bytes(value))
@@ -141,7 +141,7 @@ class BfpField(ChemField):
     def select_format(self, compiler, sql, params):
         return 'bfp_to_binary_text(%s)' % sql, params
 
-    def from_db_value(self, value, connection, context):
+    def from_db_value(self, value, expression, connection, context):
         if value is None:
             return value
         return DataStructs.CreateFromBinaryText(bytes(value))
