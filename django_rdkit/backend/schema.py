@@ -11,7 +11,7 @@ class DatabaseSchemaEditor(Psycopg2SchemaEditor):
         self.chem_sql = []
 
     def column_sql(self, model, field, include_default=False):
-        from django_rdkit.db.models.fields import ChemField
+        from django_rdkit.models.fields import ChemField
 
         column_sql = super(DatabaseSchemaEditor, self).column_sql(model, field, include_default)
 

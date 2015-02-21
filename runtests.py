@@ -14,11 +14,11 @@ DEFAULT_SETTINGS = dict(
     ),
     DATABASES={
         "default": {
-            'ENGINE': 'django_rdkit.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django_rdkit.backend',
             'NAME': 'test',
             'USER': '',
             'PASSWORD': '',
-            'HOST': 'localhost',
+            'HOST': '',
             'PORT': '',
         }
     },

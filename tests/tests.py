@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.test import TestCase
 
-from django_rdkit.db.models import *
+from django_rdkit.models import *
 
 from rdkit.Chem import AllChem as Chem
 
