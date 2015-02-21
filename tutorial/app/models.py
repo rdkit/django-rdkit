@@ -1,4 +1,4 @@
-from django_rdkit.db import models
+from django_rdkit import models
 
 
 class Compound(models.Model):

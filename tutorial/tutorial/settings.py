@@ -78,11 +78,11 @@ WSGI_APPLICATION = 'tutorial.wsgi.application'
 
 DATABASES={
     "default": {
-        'ENGINE': 'django_rdkit.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django_rdkit.backend',
         'NAME': 'django_rdkit_tutorial',
         'USER': '',
         'PASSWORD': '',
-        'HOST': 'localhost',
+        'HOST': '',
         'PORT': '',
     }
 }
