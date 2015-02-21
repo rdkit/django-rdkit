@@ -1,12 +1,12 @@
 Database setup
 ==============
 
-**NOTE: This is no longer necessary. The django-rdkit backend will automatically install the extension during the database preparation step.**
-
 The RDKit extension for PostgreSQL must be installed. Please refer to the `RDKit wiki <http://code.google.com/p/rdkit/wiki/BuildingTheCartridge>`_ for detailed instructions.
 
 creation of a chemical database template
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**NOTE: This is no longer necessary. The django-rdkit backend will automatically install the extension during the database preparation step.**
 
 ::
 

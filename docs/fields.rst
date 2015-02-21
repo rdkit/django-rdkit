@@ -1,22 +1,11 @@
 Model field reference
 =====================
 
-.. module:: django_rdkit.db.models.fields
+.. module:: django_rdkit.models.fields
 
-.. currentmodule:: django_rdkit.db.models
+.. currentmodule:: django_rdkit.models
 
 A few custom model fields are provided, mapping to the chemical data types defined by the RDKit cartridge.
-
-Field options
--------------
-
-In addition to those usually supported by django fields, the following field options are supported:
-
-``chem_index``
-..............
-
-If ``True``, a GIST index will be created for this column. Default value is ``True``.
-
 
 Field types
 -----------
@@ -43,6 +32,17 @@ A bit vector fingerprint. It may be assigned using an ``ExplicitBitVect`` instan
 
 
 A sparse count vector fingerprint (``SparseIntVect``). Values for this field are assigned with an update query using one of the implemented fingerprint functions.
+
+
+Field options
+-------------
+
+In addition to those usually supported by django fields, the following field options are supported:
+
+``chem_index``
+..............
+
+If ``True``, a GIST index will be created for this column. Default value is ``True``.
 
 
 
