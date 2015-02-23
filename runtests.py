@@ -9,7 +9,6 @@ from django.test.runner import DiscoverRunner
 
 DEFAULT_SETTINGS = dict(
     INSTALLED_APPS=(
-        'django_rdkit',
         'tests',
     ),
     DATABASES={
