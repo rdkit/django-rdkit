@@ -4,15 +4,16 @@ import os, sys
 
 import django
 from django.conf import settings
-from django.test.runner import DiscoverRunner
-
+from django.core.management import call_command
 
 DEFAULT_SETTINGS = dict(
     INSTALLED_APPS=(
+        #'django_rdkit',
         'tests',
     ),
     DATABASES={
         "default": {
+            #'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'ENGINE': 'django_rdkit.backend',
             'NAME': 'test',
             'USER': '',
@@ -33,14 +34,14 @@ def runtests():
     parent = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, parent)
 
-    failures = DiscoverRunner(
-        verbosity=1, 
-        interactive=True, 
-        failfast=False
-    ).run_tests(['tests'])
+    # if the postgresql_psycopg2 backend is used and the 'tests' application
+    # is not migrated, it will be synced before the rdkit extension is
+    # installed and therefore causing errors.
+    #call_command('makemigrations', 'tests')
 
-    sys.exit(failures)
+    #call_command('sqlmigrate', 'tests', '0001')
 
+    sys.exit(call_command('test', 'tests'))
 
 if __name__ == '__main__':
     runtests()

@@ -2,5 +2,6 @@
 *~
 build/
 dist/
+tests/migrations/
 django_rdkit.egg-info/
 
