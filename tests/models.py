@@ -7,6 +7,11 @@ class MoleculeModel(models.Model):
     molecule = models.MolField()
 
 
+class ReactionModel(models.Model):
+
+    rxn = models.RxnField()
+
+
 class SfpModel(models.Model):
 
     sfp = models.SfpField(null=True)

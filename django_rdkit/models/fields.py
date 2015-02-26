@@ -5,13 +5,12 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models import Lookup, Transform
 from django.db.models.fields import *
 
-from rdkit import Chem
-from rdkit.Chem import Mol
+from rdkit.Chem import AllChem as Chem
 from rdkit import DataStructs
 from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
 
 
-__all__ = ["MolField", "BfpField", "SfpField",]
+__all__ = ["MolField", "RxnField", "BfpField", "SfpField",]
  
 
 class ChemField(Field):
@@ -21,33 +20,12 @@ class ChemField(Field):
         kwargs['verbose_name'] = verbose_name
         super(ChemField, self).__init__(*args, **kwargs)
     
-    #def select_format(self, compiler, sql, params):
-    #    """
-    #    Custom format for select clauses. For example, GIS columns need to be
-    #    selected as AsText(table.col) on MySQL as the table.col data 
-    #    can't be used by Django.
-    #    """
-    #    return sql, params
-
     def deconstruct(self):
         name, path, args, kwargs = super(ChemField, self).deconstruct()
         # include chem_index if not the default value.
         if self.chem_index is not True:
             kwargs['chem_index'] = self.chem_index
         return name, path, args, kwargs
-
-    #def get_placeholder(self, value, compiler, connection):
-    #    """
-    #    Returns the placeholder for the geometry column for the
-    #    given value.
-    #    """
-    #    if hasattr(value, 'as_sql'):
-    #        # No geometry value used for F expression, substitute in
-    #        # the column name instead.
-    #        sql, _ = compiler.compile(value)
-    #        return sql
-    #    else:
-    #        return '%s'
 
 
 ##########################################
@@ -75,16 +53,16 @@ class MolField(ChemField):
     def from_db_value(self, value, expression, connection, context):
         if value is None:
             return value
-        return Mol(bytes(value))
+        return Chem.Mol(bytes(value))
 
     def to_python(self, value):
-        if value is None or isinstance(value, Mol):
+        if value is None or isinstance(value, Chem.Mol):
             return value
         elif isinstance(value, six.string_types):
             # The string case. A SMILES is assumed.
             return Chem.MolFromSmiles(str(value))
         elif isinstance(value, six.buffer_types):
-            return Mol(bytes(value))
+            return Chem.Mol(bytes(value))
         else:
             raise ValidationError("Invalid input for a Mol instance")
 
@@ -94,7 +72,7 @@ class MolField(ChemField):
         if isinstance(value, six.string_types):
             # The string case. A SMILES is assumed.
             value = Chem.MolFromSmiles(str(value))
-        if isinstance(value, Mol):
+        if isinstance(value, Chem.Mol):
             value = six.memoryview(value.ToBinary())
         return value
 
@@ -107,6 +85,75 @@ class MolField(ChemField):
         supported_lookup_types = (
             ['hassubstruct', 'issubstruct', 'exact',] +
             [T.lookup_name for T in DESCRIPTOR_TRANFORMS]
+        )
+        if lookup_type in supported_lookup_types:
+            return value
+        raise TypeError("Field has invalid lookup: %s" % lookup_type)
+
+    # this will be probably needed.
+    #def get_db_prep_lookup(lookup_type, value, connection, prepared=False):
+    #    if not prepared:
+    #        value = self.get_prep_lookup(lookup_type, value)
+    #    return value
+
+
+##########################################
+# Reaction Field
+
+class RxnField(ChemField):
+
+    description = _("Reaction")
+
+    def db_type(self, connection):
+        return 'reaction'
+    
+    #def get_placeholder(self, value, compiler, connection):
+    #    if hasattr(value, 'as_sql'):
+    #        # No value used for expressions, substitute in
+    #        # the column name instead.
+    #        sql, _ = compiler.compile(value)
+    #        return sql
+    #    else:
+    #        return 'reaction_from_pkl(%s)'
+
+    #def select_format(self, compiler, sql, params):
+    #    return 'reaction_to_pkl(%s)' % sql, params
+
+    def from_db_value(self, value, expression, connection, context):
+        if value is None:
+            return value
+        return Chem.ReactionFromSmarts(value, useSmiles=True)
+        #return Chem.ChemicalReaction(bytes(value))
+
+    def to_python(self, value):
+        if value is None or isinstance(value, Chem.ChemicalReaction):
+            return value
+        elif isinstance(value, six.string_types):
+            # The string case. A reaction SMILES is expected.
+            return Chem.ReactionFromSmarts(str(value), useSmiles=True)
+        #elif isinstance(value, six.buffer_types):
+        #    return Chem.ChemicalReaction(bytes(value))
+        else:
+            raise ValidationError("Invalid input for a ChemicalReaction instance")
+
+    def get_prep_value(self, value):
+        # convert the ChemicalReaction instance to the value used by the 
+        # db driver
+        #if isinstance(value, six.string_types):
+        #    # The string case. A reaction SMILES is assumed.
+        #    value = Chem.ReactionFromSmarts(str(value), useSmiles=True)
+        if isinstance(value, Chem.ChemicalReaction):
+            #value = six.memoryview(value.ToBinary())
+            value = Chem.ReactionToSmiles(value)
+        return value
+
+    # don't reimplement db-specific preparation of query values for now
+    # def get_db_prep_value(self, value, connection, prepared=False):
+    #    return value
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        supported_lookup_types = (
         )
         if lookup_type in supported_lookup_types:
             return value

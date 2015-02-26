@@ -43,6 +43,20 @@ for validator in ['is_valid_smiles', 'is_valid_smarts', 'is_valid_ctab']:
     __all__.append(_F.__name__)
 
 
+for function, fieldkls in [('reaction', RxnField),
+                           ('reaction_from_smiles', RxnField),
+                           ('reaction_from_smarts', RxnField),
+                           ('reaction_from_ctab', RxnField),
+                           ('reaction_to_smiles', models.CharField),
+                           ('reaction_to_smarts', models.CharField),
+                           ('reaction_to_ctab', models.TextField),
+                       ]:
+    _F = type(str(function.upper()), (models.Func,), 
+             { 'function': function, 'output_field': fieldkls(),})
+    setattr(module, _F.__name__, _F)
+    __all__.append(_F.__name__)
+
+
 for fingerprint, fieldkls in [('morgan_fp', SfpField),
                               ('morganbv_fp', BfpField),
                               ('featmorgan_fp', SfpField),

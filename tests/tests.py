@@ -8,7 +8,7 @@ from rdkit.Chem import AllChem as Chem
 
 from .models import *
 from .molecules import SMILES_SAMPLE
-
+from .reactions import REACTION_SMILES_SAMPLE, REACTION_SMARTS_SAMPLE
 
 class MolFieldTest(TestCase):
     
@@ -69,6 +69,21 @@ class MolFieldTest(TestCase):
 
         aggr = MoleculeModel.objects.aggregate(avg_amw=Avg(AMW('molecule')))
         self.assertAlmostEqual(aggr['avg_amw'], 236.874, 3)
+
+
+class RxnFieldTest(TestCase):
+
+    def setUp(self):
+        for smiles in REACTION_SMILES_SAMPLE:
+            ReactionModel.objects.create(rxn=smiles)
+        for smarts in REACTION_SMARTS_SAMPLE:
+            ReactionModel.objects.create(rxn=Chem.ReactionFromSmarts(smarts))
+
+    def test_placeholder(self):
+        self.assertEqual(
+            ReactionModel.objects.count(), 
+            len(REACTION_SMILES_SAMPLE) + len(REACTION_SMARTS_SAMPLE)
+        )
 
 
 class BfpFieldTest1(TestCase):
