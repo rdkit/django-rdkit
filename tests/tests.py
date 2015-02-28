@@ -111,7 +111,7 @@ class RxnFieldTest(TestCase):
 
     def test_descriptors(self):
         qs = ReactionModel.objects.all()
-        sum_prods = Sum(NUMPRODUCTS('rxn'), output_field=IntegerField()) #FIXME
+        sum_prods = Sum(NUMPRODUCTS('rxn'))
         aggr = qs.aggregate(sum_prods=sum_prods)
         self.assertEqual(aggr['sum_prods'], 10)
 

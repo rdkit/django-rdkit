@@ -13,8 +13,16 @@ __all__ = []
 
 module = sys.modules[__name__]
 
+class _Func(models.Func):
+
+    def __init__(self, *args, **kwargs):
+        if not 'output_field' in kwargs:
+            kwargs['output_field'] = self.default_output_field
+        super(_Func, self).__init__(*args, **kwargs)
+
+
 for mixin in MOL_DESCRIPTOR_MIXINS:
-    _F = type(str(mixin.descriptor_name.upper()), (mixin, models.Func,), {})
+    _F = type(str(mixin.descriptor_name.upper()), (mixin, _Func,), {})
     setattr(module, _F.__name__, _F)
     __all__.append(_F.__name__)
 
@@ -31,21 +39,22 @@ for function, fieldkls in [('mol', MolField),
                            ('mol_inchikey', models.TextField),
                            ('mol_formula', models.TextField),
                        ]:
-    _F = type(str(function.upper()), (models.Func,), 
-             { 'function': function, 'output_field': fieldkls(),})
+    _F = type(str(function.upper()), (_Func,),
+             { 'function': function, 'default_output_field': fieldkls(),})
     setattr(module, _F.__name__, _F)
     __all__.append(_F.__name__)
 
 
 for validator in ['is_valid_smiles', 'is_valid_smarts', 'is_valid_ctab']:
-    _F = type(str(validator.upper()), (models.Func,), 
-             { 'function': validator, 'output_field': models.BooleanField(),})
+    _F = type(str(validator.upper()), (_Func,),
+             { 'function': validator,
+               'default_output_field': models.BooleanField(),})
     setattr(module, _F.__name__, _F)
     __all__.append(_F.__name__)
 
 
 for mixin in RXN_DESCRIPTOR_MIXINS:
-    _F = type(str(mixin.descriptor_name.upper()), (mixin, models.Func,), {})
+    _F = type(str(mixin.descriptor_name.upper()), (mixin, _Func,), {})
     setattr(module, _F.__name__, _F)
     __all__.append(_F.__name__)
 
@@ -60,8 +69,8 @@ for function, fieldkls in [('reaction', RxnField),
                            ('reaction_difference_fp', SfpField),
                            ('reaction_difference_bfp', BfpField),
                        ]:
-    _F = type(str(function.upper()), (models.Func,), 
-             { 'function': function, 'output_field': fieldkls(),})
+    _F = type(str(function.upper()), (_Func,),
+             { 'function': function, 'default_output_field': fieldkls(),})
     setattr(module, _F.__name__, _F)
     __all__.append(_F.__name__)
 
@@ -83,8 +92,8 @@ for fingerprint, fieldkls in [('morgan_fp', SfpField),
                               #('tanimoto_dist', models.FloatField),
                               #('dice_dist', models.FloatField),
                           ]:
-    _F = type(str(fingerprint.upper()), (models.Func,), 
-             { 'function': fingerprint, 'output_field': fieldkls(),})
+    _F = type(str(fingerprint.upper()), (_Func,),
+             { 'function': fingerprint, 'default_output_field': fieldkls(),})
     setattr(module, _F.__name__, _F)
     __all__.append(_F.__name__)
 

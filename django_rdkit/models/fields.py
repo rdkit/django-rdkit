@@ -334,7 +334,7 @@ def make_descriptor_mixin(name, prefix, field):
         { 
             'descriptor_name': name, 
             'function': '{0}_{1}'.format(prefix, name),
-            'output_field': field, 
+            'default_output_field': field,
         },
     )
 
@@ -397,7 +397,8 @@ MOL_DESCRIPTOR_MIXINS = [
 MOL_DESCRIPTOR_TRANFORMS = [
     type(str('{0}_Transform'.format(mixin.descriptor_name.upper())),
          (mixin, DescriptorTransform,),
-         { 'lookup_name': mixin.descriptor_name, }
+         { 'lookup_name': mixin.descriptor_name,
+           'output_field': mixin.default_output_field, }
      )
     for mixin in MOL_DESCRIPTOR_MIXINS
 ]
@@ -426,7 +427,8 @@ RXN_DESCRIPTOR_MIXINS = [
 RXN_DESCRIPTOR_TRANFORMS = [
     type(str('{0}_Transform'.format(mixin.descriptor_name.upper())),
          (mixin, DescriptorTransform,),
-         { 'lookup_name': mixin.descriptor_name, }
+         { 'lookup_name': mixin.descriptor_name,
+           'output_field': mixin.default_output_field, }
      )
     for mixin in RXN_DESCRIPTOR_MIXINS
 ]
