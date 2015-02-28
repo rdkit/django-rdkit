@@ -18,6 +18,14 @@ Field types
 A field representing an RDKit molecule. It may be assigned using a ``Mol`` instance or with a SMILES string. Molecules values can be also created using one of the database functions implemented by the RDKit cartridge.
 
 
+``RxnField``
+............
+
+.. class:: RxnField(**options)
+
+A field storing a ``ChemicalReaction`` instance. It is assigned and returned from the database as a SMILES reactions string.
+
+
 ``BfpField``
 ............
 
