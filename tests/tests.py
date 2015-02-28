@@ -70,6 +70,15 @@ class MolFieldTest(TestCase):
         aggr = MoleculeModel.objects.aggregate(avg_amw=Avg(AMW('molecule')))
         self.assertAlmostEqual(aggr['avg_amw'], 236.874, 3)
 
+        aggr = MoleculeModel.objects.aggregate(sum_amw=Sum(AMW('molecule')))
+        self.assertAlmostEqual(aggr['sum_amw'], 23687.4, 3)
+
+        aggr = MoleculeModel.objects.aggregate(max_amw=Max(AMW('molecule')))
+        self.assertAlmostEqual(aggr['max_amw'], 836.468, 3)
+
+        aggr = MoleculeModel.objects.aggregate(min_amw=Min(AMW('molecule')))
+        self.assertAlmostEqual(aggr['min_amw'], 94.497, 3)
+
 
 class RxnFieldTest(TestCase):
 
@@ -111,9 +120,15 @@ class RxnFieldTest(TestCase):
 
     def test_descriptors(self):
         qs = ReactionModel.objects.all()
-        sum_prods = Sum(NUMPRODUCTS('rxn'))
-        aggr = qs.aggregate(sum_prods=sum_prods)
+
+        aggr = qs.aggregate(sum_prods=Sum(NUMPRODUCTS('rxn')))
         self.assertEqual(aggr['sum_prods'], 10)
+        
+        aggr = qs.aggregate(max_prods=Max(NUMPRODUCTS('rxn')))
+        self.assertEqual(aggr['max_prods'], 2)
+
+        aggr = qs.aggregate(min_prods=Min(NUMPRODUCTS('rxn')))
+        self.assertEqual(aggr['min_prods'], 1)
 
 
 class BfpFieldTest1(TestCase):
