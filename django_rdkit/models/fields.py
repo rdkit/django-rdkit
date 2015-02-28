@@ -84,7 +84,7 @@ class MolField(ChemField):
         "Perform preliminary non-db specific lookup checks and conversions"
         supported_lookup_types = (
             ['hassubstruct', 'issubstruct', 'exact',] +
-            [T.lookup_name for T in DESCRIPTOR_TRANFORMS]
+            [T.lookup_name for T in MOL_DESCRIPTOR_TRANFORMS]
         )
         if lookup_type in supported_lookup_types:
             return value
@@ -154,6 +154,8 @@ class RxnField(ChemField):
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
         supported_lookup_types = (
+            ['hassubstruct', 'issubstruct',] + #'exact',] +
+            [T.lookup_name for T in RXN_DESCRIPTOR_TRANFORMS]
         )
         if lookup_type in supported_lookup_types:
             return value
@@ -250,8 +252,8 @@ class SfpField(ChemField):
     #    return value
 
 
-###############################################################
-# MolField lookup operations, substruct and exact searches
+###################################################################
+# MolField/RxnField lookup operations, substruct and exact searches
 
 class HasSubstruct(Lookup):
 
@@ -263,7 +265,23 @@ class HasSubstruct(Lookup):
         params = lhs_params + rhs_params
         return '%s @> %s' % (lhs, rhs), params
 
+
 MolField.register_lookup(HasSubstruct)
+RxnField.register_lookup(HasSubstruct)
+
+
+class HasSubstructFP(Lookup):
+
+    lookup_name = 'hassubstructfp'
+
+    def as_sql(self, qn, connection):
+        lhs, lhs_params = self.process_lhs(qn, connection)
+        rhs, rhs_params = self.process_rhs(qn, connection)
+        params = lhs_params + rhs_params
+        return '%s ?> %s' % (lhs, rhs), params
+
+
+RxnField.register_lookup(HasSubstructFP)
 
 
 class IsSubstruct(Lookup):
@@ -277,6 +295,20 @@ class IsSubstruct(Lookup):
         return '%s <@ %s' % (lhs, rhs), params
 
 MolField.register_lookup(IsSubstruct)
+RxnField.register_lookup(IsSubstruct)
+
+
+class IsSubstructFP(Lookup):
+
+    lookup_name = 'issubstructfp'
+
+    def as_sql(self, qn, connection):
+        lhs, lhs_params = self.process_lhs(qn, connection)
+        rhs, rhs_params = self.process_rhs(qn, connection)
+        params = lhs_params + rhs_params
+        return '%s ?< %s' % (lhs, rhs), params
+
+RxnField.register_lookup(IsSubstructFP)
 
 
 class SameStructure(Lookup):
@@ -292,11 +324,32 @@ class SameStructure(Lookup):
 
 MolField.register_lookup(SameStructure)
 
+################
+# descriptors utils
+
+def make_descriptor_mixin(name, prefix, field):
+    return type(
+        str('{0}_Mixin'.format(name.upper())), 
+        (object,),
+        { 
+            'descriptor_name': name, 
+            'function': '{0}_{1}'.format(prefix, name),
+            'output_field': field, 
+        },
+    )
+
+
+class DescriptorTransform(Transform):
+
+    def as_sql(self, qn, connection):
+        lhs, params = qn.compile(self.lhs)
+        return "%s(%s)" % (self.function, lhs), params
+    
 
 ##########################################
 # MolField transforms and descriptors
 
-DESCRIPTORS = [
+MOL_DESCRIPTORS = [
     ('hba', IntegerField),
     ('hbd', IntegerField),
     ('numatoms', IntegerField),
@@ -335,41 +388,52 @@ DESCRIPTORS = [
 ]
 
 
-def make_mixin(name, field):
-    return type(
-        str('{0}_Mixin'.format(name.upper())), 
-        (object,),
-        { 
-            'descriptor_name': name, 
-            'function': 'mol_{0}'.format(name),
-            'output_field': field, 
-        },
-    )
-
-
-DESCRIPTOR_MIXINS = [
-    make_mixin(d, fieldkls()) for d, fieldkls in DESCRIPTORS 
+MOL_DESCRIPTOR_MIXINS = [
+    make_descriptor_mixin(d, 'mol', fieldkls()) 
+    for d, fieldkls in MOL_DESCRIPTORS 
 ]
 
 
-class DescriptorTransform(Transform):
-
-    def as_sql(self, qn, connection):
-        lhs, params = qn.compile(self.lhs)
-        return "%s(%s)" % (self.function, lhs), params
-    
-
-DESCRIPTOR_TRANFORMS = [
+MOL_DESCRIPTOR_TRANFORMS = [
     type(str('{0}_Transform'.format(mixin.descriptor_name.upper())),
          (mixin, DescriptorTransform,),
          { 'lookup_name': mixin.descriptor_name, }
      )
-    for mixin in DESCRIPTOR_MIXINS
+    for mixin in MOL_DESCRIPTOR_MIXINS
 ]
 
 
-for Transform in DESCRIPTOR_TRANFORMS:
+for Transform in MOL_DESCRIPTOR_TRANFORMS:
     MolField.register_lookup(Transform)
+
+
+##########################################
+# RxnField transforms and descriptors
+
+RXN_DESCRIPTORS = [
+    ('numreactants', IntegerField),
+    ('numproducts', IntegerField),
+    ('numagents', IntegerField),
+]
+
+
+RXN_DESCRIPTOR_MIXINS = [
+    make_descriptor_mixin(d, 'reaction', fieldkls()) 
+    for d, fieldkls in RXN_DESCRIPTORS 
+]
+
+
+RXN_DESCRIPTOR_TRANFORMS = [
+    type(str('{0}_Transform'.format(mixin.descriptor_name.upper())),
+         (mixin, DescriptorTransform,),
+         { 'lookup_name': mixin.descriptor_name, }
+     )
+    for mixin in RXN_DESCRIPTOR_MIXINS
+]
+
+
+for Transform in RXN_DESCRIPTOR_TRANFORMS:
+    RxnField.register_lookup(Transform)
 
 
 ####################################################################

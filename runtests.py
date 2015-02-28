@@ -41,7 +41,7 @@ def runtests():
 
     #call_command('sqlmigrate', 'tests', '0001')
 
-    sys.exit(call_command('test', 'tests'))
+    sys.exit(call_command('test', 'tests')) #.tests.RxnFieldTest.test_descriptors'))
 
 if __name__ == '__main__':
     runtests()

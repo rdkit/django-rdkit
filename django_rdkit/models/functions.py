@@ -6,13 +6,14 @@ from django.db import models
 from django.db.models.expressions import Expression
 
 from django_rdkit.models.fields import *
-from django_rdkit.models.fields import DESCRIPTOR_MIXINS
+from django_rdkit.models.fields import MOL_DESCRIPTOR_MIXINS
+from django_rdkit.models.fields import RXN_DESCRIPTOR_MIXINS
 
 __all__ = []
 
 module = sys.modules[__name__]
 
-for mixin in DESCRIPTOR_MIXINS:
+for mixin in MOL_DESCRIPTOR_MIXINS:
     _F = type(str(mixin.descriptor_name.upper()), (mixin, models.Func,), {})
     setattr(module, _F.__name__, _F)
     __all__.append(_F.__name__)
@@ -43,6 +44,12 @@ for validator in ['is_valid_smiles', 'is_valid_smarts', 'is_valid_ctab']:
     __all__.append(_F.__name__)
 
 
+for mixin in RXN_DESCRIPTOR_MIXINS:
+    _F = type(str(mixin.descriptor_name.upper()), (mixin, models.Func,), {})
+    setattr(module, _F.__name__, _F)
+    __all__.append(_F.__name__)
+
+
 for function, fieldkls in [('reaction', RxnField),
                            ('reaction_from_smiles', RxnField),
                            ('reaction_from_smarts', RxnField),
@@ -50,6 +57,8 @@ for function, fieldkls in [('reaction', RxnField),
                            ('reaction_to_smiles', models.CharField),
                            ('reaction_to_smarts', models.CharField),
                            ('reaction_to_ctab', models.TextField),
+                           ('reaction_difference_fp', SfpField),
+                           ('reaction_difference_bfp', BfpField),
                        ]:
     _F = type(str(function.upper()), (models.Func,), 
              { 'function': function, 'output_field': fieldkls(),})

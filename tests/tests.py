@@ -79,11 +79,41 @@ class RxnFieldTest(TestCase):
         for smarts in REACTION_SMARTS_SAMPLE:
             ReactionModel.objects.create(rxn=Chem.ReactionFromSmarts(smarts))
 
-    def test_placeholder(self):
+    def test_products_count(self):
         self.assertEqual(
-            ReactionModel.objects.count(), 
-            len(REACTION_SMILES_SAMPLE) + len(REACTION_SMARTS_SAMPLE)
+            ReactionModel.objects.filter(rxn__numproducts=1).count(), 
+            6
         )
+        self.assertEqual(
+            ReactionModel.objects.filter(rxn__numproducts__gt=1).count(), 
+            2
+        )
+
+    def test_reactants_count(self):
+        self.assertEqual(
+            ReactionModel.objects.filter(rxn__numreactants=2).count(), 
+            2
+        )
+        self.assertEqual(
+            ReactionModel.objects.filter(rxn__numreactants__lt=2).count(), 
+            6
+        )
+
+    def test_agents_count(self):
+        self.assertEqual(
+            ReactionModel.objects.filter(rxn__numagents=0).count(), 
+            4
+        )
+        self.assertEqual(
+            ReactionModel.objects.filter(rxn__numagents__gt=1).count(), 
+            2
+        )
+
+    def test_descriptors(self):
+        qs = ReactionModel.objects.all()
+        sum_prods = Sum(NUMPRODUCTS('rxn'), output_field=IntegerField()) #FIXME
+        aggr = qs.aggregate(sum_prods=sum_prods)
+        self.assertEqual(aggr['sum_prods'], 10)
 
 
 class BfpFieldTest1(TestCase):
