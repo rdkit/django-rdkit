@@ -67,7 +67,7 @@ for function, fieldkls in [('reaction', RxnField),
                            ('reaction_to_smarts', models.CharField),
                            ('reaction_to_ctab', models.TextField),
                            ('reaction_difference_fp', SfpField),
-                           ('reaction_difference_bfp', BfpField),
+                           ('reaction_structural_bfp', BfpField),
                        ]:
     _F = type(str(function.upper()), (_Func,),
              { 'function': function, 'default_output_field': fieldkls(),})
