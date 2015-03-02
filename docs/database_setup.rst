@@ -1,26 +1,11 @@
 Database setup
 ==============
 
-The RDKit extension for PostgreSQL must be installed. Please refer to the `RDKit wiki <http://code.google.com/p/rdkit/wiki/BuildingTheCartridge>`_ for detailed instructions.
+The RDKit extension for PostgreSQL must be compiled and installed. 
 
-creation of a chemical database template
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Conda packages for the main RDKit releases, including the postgres cartridge for the linux platform, may be found from the `RDKit binstar channel <https://conda.binstar.org/rdkit>`_ or built using the recipes available from the `conda-rdkit repository <https://github.com/rdkit/conda-rdkit>`_.
 
-**NOTE: This is no longer necessary. The django-rdkit backend will automatically install the extension during the database preparation step.**
+Please refer to the `RDKit documentation <http://code.google.com/p/rdkit/wiki/BuildingTheCartridge>`_ for general instructions regarding building the database cartridge from a source code distribution.
 
-::
-
-    # Creating the template database.
-    $ createdb -E UTF8 template_rdkit
-    # Allows non-superusers the ability to create from this template
-    $ psql -d postgres -c "UPDATE pg_database SET datistemplate='true' WHERE datname='template_rdkit';"
-    # Loading the RDKit cartridge
-    $ psql -d template_rdkit -c "CREATE EXTENSION rdkit"
-
-creation of the database
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
-    $ createdb -T template_rdkit my_chem_db
+The details of the PostgreSQL database creation and configuration may vary depending on the deployment strategy and the application-specific needs, but no other special requirements exist for using the RDKit PostgreSQL cartridge in a django project. For general advice please refer to the official PostgreSQL and django documentation.
 

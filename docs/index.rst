@@ -13,6 +13,7 @@ Contents:
 
    introduction
    database_setup
+   project
    fields
    lookups
 
