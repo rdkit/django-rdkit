@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+import unittest
+
+from django import VERSION
 from django.test import TestCase
 
 from django_rdkit.models import *
@@ -37,6 +40,17 @@ class MolFieldTest(TestCase):
         cnt2 = objs.count()
         self.assertEqual(cnt2, 7)
 
+    @unittest.skipIf(VERSION[:2] < (1,8), 'requires django >= 1.8')
+    def test_qmon_hassubstruct_lookup(self):
+
+        objs = MoleculeModel.objects.filter(molecule__hassubstruct='C1=CC=CC=C1')
+        cnt1 = objs.count()
+        self.assertEqual(cnt1, 70)
+
+        objs = MoleculeModel.objects.filter(molecule__hassubstruct='C1=CN=CC=C1')
+        cnt2 = objs.count()
+        self.assertEqual(cnt2, 7)
+
         objs = MoleculeModel.objects.filter(
             Q(molecule__hassubstruct='C1=CC=CC=C1') |
             Q(molecule__hassubstruct='C1=CN=CC=C1'),
@@ -57,7 +71,14 @@ class MolFieldTest(TestCase):
         objs = MoleculeModel.objects.filter(molecule__issubstruct='CC[N+]([O-])(CC)CCCN1c2ccccc2S(=O)c2ccccc21')
         self.assertEqual(objs.count(), 4)
 
-    def test_descriptor_AMW(self):
+    def test_descriptor_AMW_lookup(self):
+
+        threshold = 250.
+        cnt1 = MoleculeModel.objects.filter(molecule__amw__gt=threshold).count()
+        self.assertEqual(cnt1, 36)
+        
+    @unittest.skipIf(VERSION[:2] < (1,8), 'requires django >= 1.8')
+    def test_descriptor_AMW_function(self):
 
         threshold = 250.
         cnt1 = MoleculeModel.objects.filter(molecule__amw__gt=threshold).count()
@@ -118,6 +139,7 @@ class RxnFieldTest(TestCase):
             2
         )
 
+    @unittest.skipIf(VERSION[:2] < (1,8), 'requires django >= 1.8')
     def test_descriptors(self):
         qs = ReactionModel.objects.all()
 
@@ -131,6 +153,7 @@ class RxnFieldTest(TestCase):
         self.assertEqual(aggr['min_prods'], 1)
 
 
+@unittest.skipIf(VERSION[:2] < (1,8), 'requires django >= 1.8')
 class BfpFieldTest1(TestCase):
     
     def setUp(self):
@@ -150,6 +173,7 @@ class BfpFieldTest1(TestCase):
         self.assertEqual(objs.count(), 5)
 
         
+@unittest.skipIf(VERSION[:2] < (1,8), 'requires django >= 1.8')
 class BfpFieldTest2(TestCase):
     
     def setUp(self):
@@ -169,6 +193,7 @@ class BfpFieldTest2(TestCase):
         self.assertEqual(objs.count(), 2)
 
 
+@unittest.skipIf(VERSION[:2] < (1,8), 'requires django >= 1.8')
 class BfpFieldTest3(TestCase):
 
     def test_pkl_io(self):
@@ -187,6 +212,7 @@ class BfpFieldTest3(TestCase):
                              list(obfp.GetOnBits()))
 
 
+@unittest.skipIf(VERSION[:2] < (1,8), 'requires django >= 1.8')
 class SfpFieldTest1(TestCase):
     
     def setUp(self):
@@ -206,6 +232,7 @@ class SfpFieldTest1(TestCase):
         self.assertEqual(objs.count(), 15)
 
         
+@unittest.skipIf(VERSION[:2] < (1,8), 'requires django >= 1.8')
 class SfpFieldTest2(TestCase):
     
     def setUp(self):

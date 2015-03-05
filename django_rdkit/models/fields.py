@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from django import VERSION as _django_version
+
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Lookup, Transform
@@ -38,13 +40,17 @@ class MolField(ChemField):
     def db_type(self, connection):
         return 'mol'
     
-    def get_placeholder(self, value, compiler, connection):
-        if hasattr(value, 'as_sql'):
-            # No value used for expressions, substitute in
-            # the column name instead.
-            sql, _ = compiler.compile(value)
-            return sql
-        else:
+    if _django_version[:2] > (1,7):
+        def get_placeholder(self, value, compiler, connection):
+            if hasattr(value, 'as_sql'):
+                # No value used for expressions, substitute in
+                # the column name instead.
+                sql, _ = compiler.compile(value)
+                return sql
+            else:
+                return 'mol_from_pkl(%s)'
+    else:
+        def get_placeholder(self, value, connection):
             return 'mol_from_pkl(%s)'
 
     def select_format(self, compiler, sql, params):
@@ -178,13 +184,17 @@ class BfpField(ChemField):
     def db_type(self, connection):
         return 'bfp'
     
-    def get_placeholder(self, value, compiler, connection):
-        if hasattr(value, 'as_sql'):
-            # No value used for expressions, substitute in
-            # the column name instead.
-            sql, _ = compiler.compile(value)
-            return sql
-        else:
+    if _django_version[:2] > (1,7):
+        def get_placeholder(self, value, compiler, connection):
+            if hasattr(value, 'as_sql'):
+                # No value used for expressions, substitute in
+                # the column name instead.
+                sql, _ = compiler.compile(value)
+                return sql
+            else:
+                return 'bfp_from_binary_text(%s)'
+    else:
+        def get_placeholder(self, value, connection):
             return 'bfp_from_binary_text(%s)'
 
     def select_format(self, compiler, sql, params):

@@ -11,6 +11,7 @@ DEFAULT_SETTINGS = dict(
         'django_rdkit',
         'tests',
     ),
+    MIDDLEWARE_CLASSES=(), # django 1.7 emits a warning if this is not set
     DATABASES={
         "default": {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
