@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    introduction
+   tutorial
    database_setup
    project
    fields
