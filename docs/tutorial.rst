@@ -18,11 +18,11 @@ A database should be created with appropriate access privileges to be used by th
 Creation of the django project
 ------------------------------
 
-Select an appropriate filesystem location and create a new skeleton django project named `tutorial_project`::
+Select an appropriate filesystem location and create a new skeleton django project named ``tutorial_project``::
 
   $ django-admin startproject tutorial_project
 
-Change working directory to the `tutorial_project` directory (where the `manage.py` file is located) and open the `tutorial_project/settings.py` module with your favourite text editor. 
+Change working directory to the ``tutorial_project`` directory (where the ``manage.py`` file is located) and open the ``tutorial_project/settings.py`` module with your favourite text editor. 
 
 Replace the default database settings with those appropriate to the created PostgreSQL database::
 
@@ -37,7 +37,7 @@ Replace the default database settings with those appropriate to the created Post
       }
   }
 
-And extend the `INSTALLED_APPS` list to include the `django_rdkit` application::
+And extend the ``INSTALLED_APPS`` list to include the ``django_rdkit`` application::
 
   INSTALLED_APPS = (
       'django.contrib.admin',
@@ -54,7 +54,7 @@ Finally, initialize the database::
 
   $ python manage.py migrate
   
-The `migrate` command above configures the database for the installed applications. The inclusion of `django_rdkit` in the `INSTALLED_APP` is not strictly required, but allows integrating the creation of the RDKit extension with the management of the django project, as evidenced by using `sqlmigrate`::
+The ``migrate`` command above configures the database for the installed applications. The inclusion of ``django_rdkit`` in the ``INSTALLED_APP`` is not strictly required, but allows integrating the creation of the RDKit extension with the management of the django project, as evidenced by using ``sqlmigrate``::
 
   $ python manage.py sqlmigrate django_rdkit 0001
   BEGIN;
@@ -78,11 +78,11 @@ The correct configuration of the project may be quickly verified at this stage b
 Creation of a django application
 --------------------------------
 
-The additional functionalities developed in the context of this tutorial will be contained in a so-called django application. We'll call this application `tutorial_application'::
+The additional functionalities developed in the context of this tutorial will be contained in a so-called django application. We'll call this application ``tutorial_application``::
 
   $ python manage.py startapp tutorial_application
 
-The list of `INSTALLED_APPS` in the `tutorial_project/settings.py` module must be extended to include the new application::
+The list of ``INSTALLED_APPS`` in the ``tutorial_project/settings.py`` module must be extended to include the new application::
 
   INSTALLED_APPS = (
       'django.contrib.admin',
@@ -95,7 +95,7 @@ The list of `INSTALLED_APPS` in the `tutorial_project/settings.py` module must b
       'tutorial_application',
   )
 
-We'll use this application to manage a collection of compound structures. In order to do so, edit the `tutorial_applications/models.py` module so that it looks like the following::
+We'll use this application to manage a collection of compound structures. In order to do so, edit the ``tutorial_applications/models.py`` module so that it looks like the following::
 
   from django_rdkit import models
   
@@ -104,7 +104,7 @@ We'll use this application to manage a collection of compound structures. In ord
       name = models.CharField(max_length=256)
       molecule = models.MolField()
 
-Please note that we import `models` from the `django_rdkit` package, instead of from `django.db` as we would usually do. This makes the `MolField` and the other functionalities that are specific the RDKit cartridge available, together with the rest of the usual fields and functions that are usually availble from `django.db`.
+Please note that we import ``models`` from the ``django_rdkit`` package, instead of from ``django.db`` as we would usually do. This makes the ``MolField`` and the other functionalities that are specific the RDKit cartridge available, together with the rest of the usual fields and functions that are usually availble from ``django.db``.
 
 In order to extend the schema of the PostgreSQL database to include this model, we now need to create and apply a corresponding migration::
 
@@ -143,7 +143,7 @@ We can now delete this sample compound, more data will be imported in the next s
 Structures import and search
 ----------------------------
 
-To display the use of structure searches we'll use a copy of the ChEMBL data. Download a copy of the `chembl_20_chemreps.txt` which is available from `here <ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_20/>`_ and place it into a suitable directory.
+To display the use of structure searches we'll use a copy of the ChEMBL data. Download a copy of the ``chembl_20_chemreps.txt`` which is available from `here <ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_20/>`_ and place it into a suitable directory.
 
 The initial import may therefore be performed with code similar to the following::
 
@@ -178,5 +178,5 @@ The initial import may therefore be performed with code similar to the following
      ...:         Compound.objects.create(name=name, molecule=molecule)
      ...:         
 
-The import loop may take some time, consider using the `limit` parameter to shorten the duration of this step.
+The import loop may take some time, consider using the ``limit`` parameter to shorten the duration of this step.
 
