@@ -8,7 +8,7 @@ Some familiarity with django and the django database api is assumed (excellent d
 Database setup
 --------------
 
-PostgreSQL and the RDKit cartridge should be installed and running on the system.
+PostgreSQL and the RDKit cartridge should be installed and running on the system. 
 
 A database should be created with appropriate access privileges to be used by the tutorial project. Minimally, this requires running the following command::
 
@@ -135,9 +135,48 @@ We can immediately try adding data to this model using again the python shell::
      ...:     
   benzene 78.114
 
-We can now delete this sample compound, as we'll import many more in the next section of this tutorial::
+We can now delete this sample compound, more data will be imported in the next section of this tutorial::
 
   In [5]: Compound.objects.all().delete()
-  
 
+  
+Structures import and search
+----------------------------
+
+To display the use of structure searches we'll use a copy of the ChEMBL data. Download a copy of the `chembl_20_chemreps.txt` which is available from `here <ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_20/>`_ and place it into a suitable directory.
+
+The initial import may therefore be performed with code similar to the following::
+
+  $ python manage.py shell
+  [...]
+  In [1]: path = '../../chembl/chembl_20_chemreps.txt'
+   
+  In [2]: from rdkit import Chem
+  
+  In [3]: def chembl(path, limit=None):
+     ...:     count = 0
+     ...:     with open(path, 'rt) as f:
+     ...:         next(f) # skip header
+     ...:         for line in f:
+     ...:             name, smiles = line.split()[:2]
+     ...:             molecule = Chem.MolFromSmiles(smiles)
+     ...:             if molecule:
+     ...:                 yield name, molecule
+     ...:                 count += 1
+     ...:             if limit and count == limit:
+     ...:                 break
+     ...:             
+  
+  In [4]: from tutorial_application.models import Compound
+  
+  In [5]: for name, molecule in chembl(path, limit=None): 
+     ...:     smiles = Chem.MolToSmiles(molecule)
+     ...:     test_molecule = Chem.MolFromSmiles(smiles)
+     ...:     if not test_molecule:
+     ...:         print('smiles-mol-smiles roundtrip issue:', name)
+     ...:     else:
+     ...:         Compound.objects.create(name=name, molecule=molecule)
+     ...:         
+
+The import loop may take some time, consider using the `limit` parameter to shorten the duration of this step.
 
