@@ -5,12 +5,7 @@ This tutorial will try to reproduce the operations described in the `RDKit Postg
 
 Some familiarity with django and the django database api is assumed (excellent documentation about these is available from the `django web site <https://docs.djangoproject.com>`_).
 
-Database setup
---------------
-
-PostgreSQL and the RDKit cartridge should be installed and running on the system. 
-
-A database should be created with appropriate access privileges to be used by the tutorial project. Minimally, this requires running the following command::
+PostgreSQL and the RDKit cartridge should be installed and running on the system. A database should be created with appropriate access privileges to be used by the tutorial project. Minimally, this requires running the following command::
 
   $ createdb django_rdkit_tutorial
 
@@ -18,7 +13,7 @@ A database should be created with appropriate access privileges to be used by th
 Creation of the django project
 ------------------------------
 
-Select an appropriate filesystem location and create a new skeleton django project named ``tutorial_project``::
+Create a new skeleton django project named ``tutorial_project``::
 
   $ django-admin startproject tutorial_project
 
@@ -140,8 +135,8 @@ We can now delete this sample compound, more data will be imported in the next s
   In [5]: Compound.objects.all().delete()
 
   
-Structures import and search
-----------------------------
+Structures import and substructure queries
+------------------------------------------
 
 To display the use of structure searches we'll use a copy of the ChEMBL data. Download a copy of the ``chembl_20_chemreps.txt`` which is available from `here <ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_20/>`_ and place it into a suitable directory.
 
@@ -178,5 +173,119 @@ The initial import may therefore be performed with code similar to the following
      ...:         Compound.objects.create(name=name, molecule=molecule)
      ...:         
 
-The import loop may take some time, consider using the ``limit`` parameter to shorten the duration of this step.
+The import loop may take some time, consider using the ``limit`` parameter to shorten the duration of this step. Once the import has completed one can easily verify the number of available compounds::
+
+  In [8]: Compound.objects.count()
+  Out[8]: 1455712
+
+In order to efficiently perform structural queries on the imported compounds, a database index must be created. This operation can be implemented with a database migration. Execute the following command to create an empty skeleton for this migration::
+
+  $ python manage.py makemigrations --empty --name create_compound_molecule_index tutorial_application
+  Migrations for 'tutorial_application':
+    0002_create_compound_molecule_index.py:
+
+Now open the file ``tutorial_application\migrations\0002_create_compound_molecule_index.py`` with a text editor and edit a couple of lines in order to import the ``GiSTIndex`` operation and apply it. The resulting migration module should look similar to the following::
+
+  from django.db import models, migrations
+  from django_rdkit.operations import GiSTIndex
+  
+  class Migration(migrations.Migration):
+  
+      dependencies = [
+          ('tutorial_application', '0001_initial'),
+      ]
+  
+      operations = [
+          GiSTIndex('Compound', 'molecule')
+      ]
+
+When done, save your changes and run the migration (depending on the number of structures imported into the model, the indexing may take quite some time to complete)::
+
+$ python manage.py migrate tutorial_application
+Operations to perform:
+  Apply all migrations: tutorial_application
+Running migrations:
+  Rendering model states... DONE
+  Applying tutorial_application.0002_create_compound_molecule_index...
+
+
+Finally, following the original tutorial, we can now perform a few example substructure queries::
+
+  In [1]: from django_rdkit.models import *
+  
+  In [2]: from tutorial_application.models import *
+  
+  In [3]: def smiles_substructure_query(substructure):
+     ....:     query = Compound.objects.filter(molecule__hassubstruct=substructure)
+     ....:     for cmpd in query.annotate(smiles=MOL_TO_SMILES('molecule'))[:5]:
+     ....:         print(cmpd.name, cmpd.smiles)
+     ....:         
+
+The above code uses the ``hassubstruct`` lookup operator, which is specific to the ``MolField`` field, and also uses the ``MOL_TO_SMILES`` database function to convert the selected molecules and annotate the model instance with a smiles string. Both functionalities are provided by the RDKit cartridge.
+
+::
+
+  In [4]: smiles_substructure_query('c1cccc2c1nncc2')
+  CHEMBL113970 CCCCn1c(=O)c2cc(OC)c(OC)cc2c2nnc3cc4c(cc3c21)OCO4
+  CHEMBL113470 COc1cc2c(cc1OC)c1nnc3cc4c(cc3c1n(C(C)CN(C)C)c2=O)OCO4
+  CHEMBL12112 CC(C)Sc1ccc(CC2CCN(C3CCN(C(=O)c4cnnc5ccccc54)CC3)CC2)cc1
+  CHEMBL71086 COc1cc2c(cc1OC)c1nnc3cc4c(cc3c1n(CCN(C)C)c2=O)OCO4 
+  CHEMBL89981 c1ccc(CN2CCC(CCNc3cc4ccc5ccccc5c4nn3)CC2)cc1
+  
+  In [5]: smiles_substructure_query('c1ccnc2c1nccn2')
+  CHEMBL110168 CCOC(=O)Nc1cc(NC(C)CCCN(CC)CC)c2nc(-c3ccccc3)c(-c3ccccc3)nc2n1
+  CHEMBL50456 Clc1ccc(CN2CCN(c3nc4cccnc4n4cccc34)CC2)c(Cl)c1
+  CHEMBL107535 O=c1c2cccn2c2ncccc2n1CCNC(=S)Nc1ccc(Br)cn1
+  CHEMBL51225 c1cc2c(N3CCN(c4ccccc4)CC3)nc3cccnc3n2c1
+  CHEMBL54246 Cc1ccnc2c1nc(N1CCN(Cc3ccccc3)CC1)c1cccn12
+
+SMARTS-based queries
+....................
+
+Similarly, substructure queries can use a SMARTS string as argument::
+
+  In [20]: def smarts_substructure_query(substructure):
+     ....:     query = Compound.objects.filter(molecule__hassubstruct=QMOL(Value(substructure)))
+     ....:     for cmpd in query.annotate(smiles=MOL_TO_SMILES('molecule'))[:5]:
+     ....:         print(cmpd.name, cmpd.smiles)
+     ....:         
+
+The lookup api expects a SMILES string by default, so a query molecule must be created explicitly, using the ``QMOL`` constructor, which is exposed as a database function. Please note that database functions execute on the backend, and by default assume their argument to resolve to a database column. Since a literal SMARTS string is used, it must be wrapped inside a call to ``Value()`` (the query expression api was introduced in django 1.8, for further details about this see the official `documentation <https://docs.djangoproject.com/en/1.8/ref/models/expressions/>`_.
+
+::
+
+  In [21]: smarts_substructure_query('c1[o,s]ncn1')
+  CHEMBL52013 C[C@@H](NC(=O)c1nsc(-c2ccc(Cl)cc2)n1)[C@](O)(Cn1cncn1)c1ccc(F)cc1F
+  CHEMBL48759 CCN(CC)C(=O)N1Cc2c(-c3noc(C4CC4)n3)ncn2-c2ccccc21
+  CHEMBL48839 CCSC(=O)N1Cc2c(-c3noc(C4CC4)n3)ncn2-c2ccccc21
+  CHEMBL105111 COc1ccc(-c2noc(CN3C(=O)c4ccccc4C3=O)n2)cc1
+  CHEMBL105112 Cc1ccccc1-c1noc(CN2C(=O)c3ccccc3C2=O)n1
+
+Using stereochemistry
+.....................
+
+By default stereochemistry is not taken into account when performing substructure queries::
+
+  In [42]: smiles_substructure_query('NC(=O)[C@H]1CCCN1C=O')
+  CHEMBL118176 CC(C)[C@@H](NC(=O)COc1ccc(OCC(=O)O)cc1)C(=O)N1CCC[C@H]1C(=O)N[C@H](C(=O)c1nc2ccccc2o1)C(C)C
+  CHEMBL117981 O=C(CCCc1ccccc1)N1CCC[C@H]1C(=O)N1CCC[C@H]1C(=O)c1ccccn1
+  CHEMBL117920 O=C(CCCc1ccccc1)N1CCC[C@H]1C(=O)N1CCC[C@H]1C(=O)c1cccnc1
+  CHEMBL117024 Cc1ccc(C[C@H](NC(=O)c2ccc(C)c(O)c2C)[C@H](O)C(=O)N2C[C@@H](Cl)C[C@H]2C(=O)NC(C)(C)C)cc1
+  CHEMBL117088 Cc1cc(O)c(C)c(C(=O)N[C@@H](Cc2cccc(C(F)(F)F)c2)[C@H](O)C(=O)N2C[C@@H](Cl)C[C@H]2C(=O)NC(C)(C)C)c1
+
+As described in the RDKit documentation, the cartridge defines a set of configuration parameters that allow controlling this and other aspects. These parameters are exposed as attributes of a ``config`` object::
+
+  In [43]: from django_rdkit.config import config
+
+
+In particular, the effect of stereochemistry on the results returned by substructure searches is changed using the ``do_chiral_sss`` configuration variable::
+
+  In [44]: config.do_chiral_sss = True
+  
+  In [45]: smiles_substructure_query('NC(=O)[C@H]1CCCN1C=O')
+  CHEMBL100712 N=C(N)NCCC[C@H]1NC(=O)[C@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)CCCCCCCCCCNC(=O)C1=O
+  CHEMBL98474 Cc1ccccc1S(=O)(=O)NC(=O)N1CCC[C@@H]1C(=O)NCCC(=O)NC(Cc1c[nH]cn1)C(=O)O
+  CHEMBL2369135 CC[C@H](C)[C@@H]1NC(=O)[C@@H]([C@H](C)c2c(C)cc(OC)cc2C)NC(=O)[C@H](N)C(C)(C)SSC[C@@H]2NC(=O)[C@@H](CC(N)=O)NC(=O)[C@@H](CCC(=O)NCCCC[C@H](C(=O)NCC(N)=O)NC(=O)[C@H]3CCCN3C2=O)NC1=O
+  CHEMBL2369136 CC[C@H](C)[C@@H]1NC(=O)[C@H]([C@@H](C)c2c(C)cc(OC)cc2C)NC(=O)[C@H](N)C(C)(C)SSC[C@@H]2NC(=O)[C@@H](CC(N)=O)NC(=O)[C@@H](CCC(=O)NCCCC[C@H](C(=O)NCC(N)=O)NC(=O)[C@H]3CCCN3C2=O)NC1=O
+  CHEMBL98856 N=C(N)NCCC[C@H]1NC(=O)[C@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)CCCCCNC(=O)C1=O
 
