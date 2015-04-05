@@ -17,6 +17,7 @@ Contents:
    project
    fields
    lookups
+   guc
 
 Indices and tables
 ==================
