@@ -363,7 +363,7 @@ Edit the file ``tutorial_application/migrations/0004_create_compound_mfp2_index.
           GiSTIndex('Compound', 'mfp2')
       ]
 
-And then run the migration::
+And then run the migration to complete the preparation of the database::
 
   $ python manage.py migrate tutorial_application
   Operations to perform:
@@ -371,4 +371,97 @@ And then run the migration::
   Running migrations:
     Rendering model states... DONE
     Applying tutorial_application.0004_create_compound_mfp2_index...
+
+The following demonstrate a basic similarity search::
+
+  In [1]: from django_rdkit.models import *
+  
+  In [2]: from tutorial_application.models import *
+  
+  In [3]: smiles = 'Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1'
+  
+  In [4]: value = MORGANBV_FP(Value(smiles))
+  
+  In [5]: Compound.objects.filter(mfp2__tanimoto=value).count()Out[6]: 67
+
+Following the original tutorial from the RDKit documentation, the next step consists in implementing a query to return the sorted list of neighbors along with the accompanying SMILES::
+
+  In [8]: def get_mfp2_neighbors(smiles):
+     ...:     value = MORGANBV_FP(Value(smiles))
+     ...:     queryset = Compound.objects.filter(mfp2__tanimoto=value)
+     ...:     queryset = queryset.annotate(smiles=MOL_TO_SMILES('molecule'))
+     ...:     queryset = queryset.annotate(sml=TANIMOTO_SML('mfp2', value))
+     ...:     queryset = queryset.order_by(TANIMOTO_DIST('mfp2', value)) 
+     ...:     queryset = queryset.values_list('name', 'smiles', 'sml')
+     ...:     return queryset
+     ...: 
+
+The function wraps a non-trivial database api expression, but the generated SQL query can be easily displayed for a sample queryset::
+
+  In [22]: qs = get_mfp2_neighbors('c1ccccc1')
+  
+  In [23]: print(qs.query)
+  SELECT "tutorial_application_compound"."name",
+  mol_to_smiles("tutorial_application_compound"."molecule") AS "smiles",
+  tanimoto_sml("tutorial_application_compound"."mfp2", morganbv_fp(c1ccccc1)) AS "sml"
+  FROM "tutorial_application_compound" WHERE
+  "tutorial_application_compound"."mfp2" % (morganbv_fp(c1ccccc1)) ORDER BY
+  ("tutorial_application_compound"."mfp2" <%> morganbv_fp(c1ccccc1)) ASC
+
+You can use the ``get_mfp2_neighbors`` function to perform some sample queries::
+
+  In [9]: for name, smiles, sml in get_mfp2_neighbors('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1')[:10]:
+      print(name, smiles, sml)
+     ...:     
+  CHEMBL467428 Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(C(=O)c5cccs5)CC4)cc3)sc2c1 0.772727272727273
+  CHEMBL461435 Cc1ccc2nc(-c3ccc(NC(=O)C4CCCN(S(=O)(=O)c5cccs5)C4)cc3)sc2c1 0.657534246575342
+  CHEMBL460340 Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)c5cccs5)CC4)cc3)sc2c1 0.647887323943662
+  CHEMBL460588 Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)c5cccs5)C4)cc3)sc2c1 0.638888888888889
+  CHEMBL1608585 O=C(Nc1nc2ccc(Cl)cc2s1)[C@@H]1CCCN1C(=O)c1cccs1 0.623188405797101
+  CHEMBL1327784 COc1ccc2nc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)sc2c1 0.619718309859155
+  CHEMBL518028 Cc1ccc2nc(-c3ccc(NC(=O)C4CN(S(=O)(=O)c5cccs5)C4)cc3)sc2c1 0.611111111111111
+  CHEMBL1316870 Cc1ccc(NC(=O)C2CCCN2C(=O)c2cccs2)cc1C 0.606060606060606
+  CHEMBL1309021 O=C(Nc1ccc(S(=O)(=O)N2CCCC2)cc1)C1CCCN1C(=O)c1cccs1 0.602941176470588
+  CHEMBL1706764 Cc1ccc(NC(=O)C2CCCN2C(=O)c2cccs2)c(C)c1 0.597014925373134
+  
+  In [10]: for name, smiles, sml in get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1')[:10]:
+     ....:     print(name, smiles, sml)
+     ....:     
+  CHEMBL394654 Cc1ccc2nc(N(C)CCN(C)c3nc4ccc(C)cc4s3)sc2c1 0.692307692307692
+  CHEMBL491074 CN(CC(=O)O)c1nc2cc([N+](=O)[O-])ccc2s1 0.583333333333333
+  CHEMBL1617304 CC(=O)N(CCCN(C)C)c1nc2ccc(C)cc2s1 0.571428571428571
+  CHEMBL1350062 CC(=O)N(CCCN(C)C)c1nc2ccc(C)cc2s1.Cl 0.549019607843137
+  CHEMBL1621941 Cc1ccc2nc(N(CCN(C)C)C(=O)c3cc(Cl)sc3Cl)sc2c1 0.518518518518518
+  CHEMBL1626442 Cc1ccc2nc(N(CCCN(C)C)C(=O)CS(=O)(=O)c3ccccc3)sc2c1 0.517857142857143
+  CHEMBL1617545 Cc1ccc2nc(N(CCCN(C)C)C(=O)CCc3ccccc3)sc2c1 0.517857142857143
+  CHEMBL406760 Cc1ccc2nc(NC(=O)CCC(=O)O)sc2c1 0.510204081632653
+  CHEMBL1624740 Cc1ccc(S(=O)(=O)CC(=O)N(CCCN(C)C)c2nc3ccc(C)cc3s2)cc1 0.509090909090909
+  CHEMBL1620007 Cc1ccc2nc(N(CCN(C)C)C(=O)c3ccc4ccccc4c3)sc2c1 0.509090909090909
+
+
+Adjusting the similarity cutoff
+...............................
+
+::
+
+  In [11]: print(get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1').count())
+  18
+  
+  In [12]: from django_rdkit.config import config
+  
+  In [13]: config.tanimoto_threshold = 0.7
+  
+  In [14]: print(get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1').count())
+  0
+  
+  In [15]: config.tanimoto_threshold = 0.6
+  
+  In [16]: print(get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1').count())
+  1
+  
+  In [17]: config.tanimoto_threshold = 0.5
+  
+  In [18]: print(get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1').count())
+  18
+
 
