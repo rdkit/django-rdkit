@@ -289,3 +289,86 @@ In particular, the effect of stereochemistry on the results returned by substruc
   CHEMBL2369136 CC[C@H](C)[C@@H]1NC(=O)[C@H]([C@@H](C)c2c(C)cc(OC)cc2C)NC(=O)[C@H](N)C(C)(C)SSC[C@@H]2NC(=O)[C@@H](CC(N)=O)NC(=O)[C@@H](CCC(=O)NCCCC[C@H](C(=O)NCC(N)=O)NC(=O)[C@H]3CCCN3C2=O)NC1=O
   CHEMBL98856 N=C(N)NCCC[C@H]1NC(=O)[C@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)CCCCCNC(=O)C1=O
 
+
+Similarity queries
+------------------
+
+Open the file ``tutorial_application/models.py`` for editing again, and extend the ``Compound`` model with some fingerprint fields, as displayed below::
+
+  from django_rdkit import models
+  
+  class Compound(models.Model):
+  
+      name = models.CharField(max_length=256)
+      molecule = models.MolField()
+  
+      torsionbv = models.BfpField(null=True)
+      mfp2 = models.BfpField(null=True)
+      ffp2 = models.BfpField(null=True)
+
+(please note that the new fields are defined as nullable so that we can alter the existing database table adding initially empty columns).
+
+Create a corresponding schema migration::
+
+  $ python manage.py makemigrations tutorial_application --name add_compound_fingerprint_fields
+  Migrations for 'tutorial_application':
+    0003_add_compound_fingerprint_fields.py:
+      - Add field ffp2 to compound
+      - Add field mfp2 to compound
+      - Add field torsionbv to compound
+
+And finally, apply it to the current schema::
+
+  $ python manage.py migrate tutorial_application
+  Operations to perform:
+    Apply all migrations: tutorial_application
+  Running migrations:
+    Rendering model states... DONE
+    Applying tutorial_application.0003_add_compound_fingerprint_fields... 
+
+The fingerpring columns may be filled with data that is computed with an update query::
+
+  $ python manage.py shell
+  [...]
+  In [1]: from django_rdkit.models import *
+  
+  In [2]: from tutorial_application.models import Compound 
+  
+  In [3]: Compound.objects.update(
+     ...: torsionbv=TORSIONBV_FP('molecule'),
+     ...: mfp2=MORGANBV_FP('molecule'),
+     ...: ffp2=FEATMORGANBV_FP('molecule'),
+     ...: )
+Out[3]: 1455712
+
+Once this query has completed, an index must still be added on the column (or columns) that will be frequently used to perform similarity queries. This database administration step may be again integrated into the management of the django project by means of a custom migration. First create an empty migration::
+
+  $ python manage.py makemigrations --empty --name create_compound_mfp2_index tutorial_application
+  Migrations for 'tutorial_application':
+    0004_create_compound_mfp2_index.py:
+
+Edit the file ``tutorial_application/migrations/0004_create_compound_mfp2_index.py`` to add the creation of a GiST index on the ``mfp2`` column::
+
+  from django.db import models, migrations
+  from django_rdkit.operations import GiSTIndex
+  
+  
+  class Migration(migrations.Migration):
+  
+      dependencies = [
+          ('tutorial_application', '0003_add_compound_fingerprint_fields'),
+      ]
+  
+      operations = [
+          GiSTIndex('Compound', 'mfp2')
+      ]
+
+And then run the migration::
+
+  $ python manage.py migrate tutorial_application
+  Operations to perform:
+    Apply all migrations: tutorial_application
+  Running migrations:
+    Rendering model states... DONE
+    Applying tutorial_application.0004_create_compound_mfp2_index...
+
