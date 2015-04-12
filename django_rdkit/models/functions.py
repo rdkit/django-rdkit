@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import sys
 
 from django.db import models
-from django.db.models.expressions import Expression
+from django.db.models.expressions import CombinedExpression
 
 from django_rdkit.models.fields import *
 from django_rdkit.models.fields import MOL_DESCRIPTOR_MIXINS
@@ -100,7 +100,7 @@ for fingerprint, fieldkls in [('morgan_fp', SfpField),
     __all__.append(_F.__name__)
 
 
-class TANIMOTO_DIST(Expression):
+class TANIMOTO_DIST(CombinedExpression):
 
     def __init__(self, lhs, rhs):
         lhs, rhs = [
@@ -114,7 +114,7 @@ class TANIMOTO_DIST(Expression):
 __all__.append('TANIMOTO_DIST')
 
 
-class DICE_DIST(Expression):
+class DICE_DIST(CombinedExpression):
 
     def __init__(self, lhs, rhs):
         lhs, rhs = [
