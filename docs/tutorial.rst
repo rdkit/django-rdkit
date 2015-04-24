@@ -201,12 +201,12 @@ Now open the file ``tutorial_application\migrations\0002_create_compound_molecul
 
 When done, save your changes and run the migration (depending on the number of structures imported into the model, the indexing may take quite some time to complete)::
 
-$ python manage.py migrate tutorial_application
-Operations to perform:
-  Apply all migrations: tutorial_application
-Running migrations:
-  Rendering model states... DONE
-  Applying tutorial_application.0002_create_compound_molecule_index...
+  $ python manage.py migrate tutorial_application
+  Operations to perform:
+    Apply all migrations: tutorial_application
+  Running migrations:
+    Rendering model states... DONE
+    Applying tutorial_application.0002_create_compound_molecule_index...
 
 
 Finally, following the original tutorial, we can now perform a few example substructure queries::
@@ -339,7 +339,7 @@ The fingerpring columns may be filled with data that is computed with an update 
      ...: mfp2=MORGANBV_FP('molecule'),
      ...: ffp2=FEATMORGANBV_FP('molecule'),
      ...: )
-Out[3]: 1455712
+  Out[3]: 1455712
 
 Once this query has completed, an index must still be added on the column (or columns) that will be frequently used to perform similarity queries. This database administration step may be again integrated into the management of the django project by means of a custom migration. First create an empty migration::
 
