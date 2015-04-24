@@ -13,25 +13,10 @@ from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
 __all__ = ["MolField", "RxnField", "BfpField", "SfpField",]
  
 
-class ChemField(Field):
-
-    def __init__(self, verbose_name=None, chem_index=True, *args, **kwargs):
-        self.chem_index = chem_index
-        kwargs['verbose_name'] = verbose_name
-        super(ChemField, self).__init__(*args, **kwargs)
-    
-    def deconstruct(self):
-        name, path, args, kwargs = super(ChemField, self).deconstruct()
-        # include chem_index if not the default value.
-        if self.chem_index is not True:
-            kwargs['chem_index'] = self.chem_index
-        return name, path, args, kwargs
-
-
 ##########################################
 # Molecule Field
 
-class MolField(ChemField):
+class MolField(Field):
 
     description = _("Molecule")
 
@@ -100,7 +85,7 @@ class MolField(ChemField):
 ##########################################
 # Reaction Field
 
-class RxnField(ChemField):
+class RxnField(Field):
 
     description = _("Reaction")
 
@@ -171,7 +156,7 @@ class RxnField(ChemField):
 ########################################################
 # Binary Fingerprint Field
 
-class BfpField(ChemField):
+class BfpField(Field):
 
     description = _("Binary Fingerprint")
 
@@ -226,7 +211,7 @@ class BfpField(ChemField):
 ########################################################
 # Sparse Integer Vector Fingerprint Field
 
-class SfpField(ChemField):
+class SfpField(Field):
 
     description = _("Sparse Integer Vector Fingerprint")
 
