@@ -44,7 +44,7 @@ class MolField(Field):
         if value is None or isinstance(value, Chem.Mol):
             return value
         elif isinstance(value, six.string_types):
-            # The string case. A SMILES is assumed.
+            # The string case. Assume a SMILES is passed.
             return Chem.MolFromSmiles(str(value))
         elif isinstance(value, six.buffer_types):
             return Chem.Mol(bytes(value))
@@ -61,10 +61,6 @@ class MolField(Field):
             value = six.memoryview(value.ToBinary())
         return value
 
-    # don't reimplement db-specific preparation of query values for now
-    # def get_db_prep_value(self, value, connection, prepared=False):
-    #    return value
-
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
         supported_lookup_types = (
@@ -74,12 +70,6 @@ class MolField(Field):
         if lookup_type in supported_lookup_types:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    # this will be probably needed.
-    #def get_db_prep_lookup(lookup_type, value, connection, prepared=False):
-    #    if not prepared:
-    #        value = self.get_prep_lookup(lookup_type, value)
-    #    return value
 
 
 ##########################################
@@ -92,23 +82,10 @@ class RxnField(Field):
     def db_type(self, connection):
         return 'reaction'
     
-    #def get_placeholder(self, value, compiler, connection):
-    #    if hasattr(value, 'as_sql'):
-    #        # No value used for expressions, substitute in
-    #        # the column name instead.
-    #        sql, _ = compiler.compile(value)
-    #        return sql
-    #    else:
-    #        return 'reaction_from_pkl(%s)'
-
-    #def select_format(self, compiler, sql, params):
-    #    return 'reaction_to_pkl(%s)' % sql, params
-
     def from_db_value(self, value, expression, connection, context):
         if value is None:
             return value
         return Chem.ReactionFromSmarts(value, useSmiles=True)
-        #return Chem.ChemicalReaction(bytes(value))
 
     def to_python(self, value):
         if value is None or isinstance(value, Chem.ChemicalReaction):
@@ -116,25 +93,13 @@ class RxnField(Field):
         elif isinstance(value, six.string_types):
             # The string case. A reaction SMILES is expected.
             return Chem.ReactionFromSmarts(str(value), useSmiles=True)
-        #elif isinstance(value, six.buffer_types):
-        #    return Chem.ChemicalReaction(bytes(value))
         else:
             raise ValidationError("Invalid input for a ChemicalReaction instance")
 
     def get_prep_value(self, value):
-        # convert the ChemicalReaction instance to the value used by the 
-        # db driver
-        #if isinstance(value, six.string_types):
-        #    # The string case. A reaction SMILES is assumed.
-        #    value = Chem.ReactionFromSmarts(str(value), useSmiles=True)
         if isinstance(value, Chem.ChemicalReaction):
-            #value = six.memoryview(value.ToBinary())
             value = Chem.ReactionToSmiles(value)
         return value
-
-    # don't reimplement db-specific preparation of query values for now
-    # def get_db_prep_value(self, value, connection, prepared=False):
-    #    return value
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -145,12 +110,6 @@ class RxnField(Field):
         if lookup_type in supported_lookup_types:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    # this will be probably needed.
-    #def get_db_prep_lookup(lookup_type, value, connection, prepared=False):
-    #    if not prepared:
-    #        value = self.get_prep_lookup(lookup_type, value)
-    #    return value
 
 
 ########################################################
@@ -202,11 +161,6 @@ class BfpField(Field):
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
-    #def get_db_prep_lookup(lookup_type, value, connection, prepared=False):
-    #    if not prepared:
-    #        value = self.get_prep_lookup(lookup_type, value)
-    #    return value
-
 
 ########################################################
 # Sparse Integer Vector Fingerprint Field
@@ -218,23 +172,12 @@ class SfpField(Field):
     def db_type(self, connection):
         return 'sfp'
     
-    #def to_python(self, value):
-    #    return value
-
-    #def get_prep_value(self, value):
-    #    return value
-
     def get_prep_lookup(self, lookup_type, value):
         if lookup_type in [
                 'lt', 'lte', 'exact', 'gte', 'gt', 'ne', 
                 'tanimoto', 'dice']:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    #def get_db_prep_lookup(lookup_type, value, connection, prepared=False):
-    #    if not prepared:
-    #        value = self.get_prep_lookup(lookup_type, value)
-    #    return value
 
 
 ###################################################################
@@ -469,9 +412,4 @@ class NotEqual(Lookup):
 
 BfpField.register_lookup(NotEqual)
 SfpField.register_lookup(NotEqual)
-
-
-
-
-
 
