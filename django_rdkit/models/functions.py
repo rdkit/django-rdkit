@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import sys
 
 from django.db import models
-from django.db.models.expressions import CombinedExpression
+from django.db.models.expressions import Expression
 
 from django_rdkit.models.fields import *
 from django_rdkit.models.fields import MOL_DESCRIPTOR_MIXINS
@@ -100,29 +100,49 @@ for fingerprint, fieldkls in [('morgan_fp', SfpField),
     __all__.append(_F.__name__)
 
 
-class TANIMOTO_DIST(CombinedExpression):
+class DistanceExpression(Expression):
 
-    def __init__(self, lhs, rhs):
-        lhs, rhs = [
+    def __init__(self, lhs, connector, rhs):
+        super(DistanceExpression, self).__init__(output_field=models.FloatField())
+        self.lhs, self.rhs = [
             arg if hasattr(arg, 'resolve_expression') else models.F(arg)
             for arg in (lhs, rhs)
         ]
-        super(TANIMOTO_DIST, self).__init__(lhs, '<%%>', rhs, 
-                                            models.FloatField())
+        self.connector = connector
+
+    def get_source_expressions(self):
+        return [self.lhs, self.rhs]
+
+    def set_source_expressions(self, exprs):
+        self.lhs, self.rhs = exprs
+
+    def resolve_expression(self, query=None, 
+                           allow_joins=True, reuse=None, summarize=False):
+        c = self.copy()
+        c.is_summary = summarize
+        c.lhs = self.lhs.resolve_expression(query, allow_joins, reuse, summarize)
+        c.rhs = self.rhs.resolve_expression(query, allow_joins, reuse, summarize)
+        return c
+
+    def as_sql(self, compiler, connection):
+        lhs_sql, lhs_params = compiler.compile(self.lhs)
+        rhs_sql, rhs_params = compiler.compile(self.rhs)
+        expression_wrapper = '(%s)'
+        sql = "%s %s %s" % (lhs_sql, self.connector, rhs_sql)
+        return expression_wrapper % sql, lhs_params + rhs_params
+
+
+class TANIMOTO_DIST(DistanceExpression):
+    def __init__(self, lhs, rhs):
+        super(TANIMOTO_DIST, self).__init__(lhs, '<%%>', rhs)
 
 
 __all__.append('TANIMOTO_DIST')
 
 
-class DICE_DIST(CombinedExpression):
-
+class DICE_DIST(DistanceExpression):
     def __init__(self, lhs, rhs):
-        lhs, rhs = [
-            arg if hasattr(arg, 'resolve_expression') else models.F(arg)
-            for arg in (lhs, rhs)
-        ]
-        super(DICE_DIST, self).__init__(lhs, '<#>', rhs, 
-                                            models.FloatField())
+        super(DICE_DIST, self).__init__(lhs, '<#>', rhs)
 
 
 __all__.append('DICE_DIST')
