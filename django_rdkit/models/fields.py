@@ -302,16 +302,15 @@ MOL_DESCRIPTORS = [
     ('chi1v', FloatField),
     ('chi2v', FloatField),
     ('chi3v', FloatField),
-    ('chi5v', FloatField),
+    ('chi4v', FloatField),
     ('chi0n', FloatField),
     ('chi1n', FloatField),
     ('chi2n', FloatField),
     ('chi3n', FloatField),
-    ('chi5n', FloatField),
+    ('chi4n', FloatField),
     ('kappa1', FloatField),
     ('kappa2', FloatField),
     ('kappa3', FloatField),
-    ('kappa4', FloatField),
     ('murckoscaffold', MolField),
 ]
 
