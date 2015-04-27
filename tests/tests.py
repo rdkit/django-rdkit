@@ -79,7 +79,107 @@ class MolFieldTest(TestCase):
         aggr = MoleculeModel.objects.aggregate(min_amw=Min(AMW('molecule')))
         self.assertAlmostEqual(aggr['min_amw'], 94.497, 3)
 
+    def test_exercise_mol_descriptor_transforms(self):
+        # this is a test that doesn't test much, it simply executes queries,
+        # hoping for regressions
+        for desc in (
+                'hba', 
+                'hbd', 
+                'numatoms', 
+                'numheavyatoms', 
+                'numrotatablebonds', 
+                'numheteroatoms', 
+                'numrings', 
+                'numaromaticrings', 
+                'numaliphaticrings', 
+                'numsaturatedrings', 
+                'numaromaticheterocycles', 
+                'numaliphaticheterocycles', 
+                'numsaturatedheterocycles', 
+                'numaromaticcarbocycles', 
+                'numaliphaticcarbocycles', 
+                'numsaturatedcarbocycles', 
+        ):
+            kwargs = {
+                'molecule__{}__gt'.format(desc): 0,
+            }
+            _ = MoleculeModel.objects.filter(**kwargs).count()
 
+        for desc in (
+                'amw', 
+                'logp', 
+                'tpsa', 
+                'fractioncsp3', 
+                'chi0v', 
+                'chi1v', 
+                'chi2v', 
+                'chi3v', 
+                'chi4v', 
+                'chi0n', 
+                'chi1n', 
+                'chi2n', 
+                'chi3n', 
+                'chi4n', 
+                'kappa1', 
+                'kappa2', 
+                'kappa3', 
+        ):
+            kwargs = {
+                'molecule__{}__gt'.format(desc): 0.,
+            }
+            _ = MoleculeModel.objects.filter(**kwargs).count()
+        
+        kwargs = {
+            'molecule__murckoscaffold__amw__gt': 50.
+        }
+        _ = MoleculeModel.objects.filter(**kwargs).count()
+
+    def test_exercise_mol_functions(self):
+        for func in (
+                HBA,
+                HBD, 
+                NUMATOMS, 
+                NUMHEAVYATOMS, 
+                NUMROTATABLEBONDS, 
+                NUMHETEROATOMS, 
+                NUMRINGS, 
+                NUMAROMATICRINGS, 
+                NUMALIPHATICRINGS, 
+                NUMSATURATEDRINGS,
+                NUMAROMATICHETEROCYCLES,
+                NUMAROMATICCARBOCYCLES,
+                NUMALIPHATICCARBOCYCLES,
+                NUMSATURATEDCARBOCYCLES,
+ 
+                AMW,
+                LOGP,
+                TPSA,
+                FRACTIONCSP3,
+                CHI0V,
+                CHI1V,
+                CHI2V,
+                CHI3V,
+                CHI4V,
+                CHI0N,
+                CHI1N,
+                CHI2N,
+                CHI3N,
+                CHI4N,
+                KAPPA1,
+                KAPPA2,
+                KAPPA3,
+                MURCKOSCAFFOLD,
+
+                MOL_TO_SMILES,
+                MOL_TO_SMARTS,
+                MOL_TO_CTAB,
+                MOL_INCHI,
+                MOL_INCHIKEY,
+                MOL_FORMULA,
+        ):
+            _ = list(MoleculeModel.objects.annotate(result=func('molecule')))
+
+            
 class RxnFieldTest(TestCase):
 
     def setUp(self):
@@ -129,6 +229,30 @@ class RxnFieldTest(TestCase):
 
         aggr = qs.aggregate(min_prods=Min(NUMPRODUCTS('rxn')))
         self.assertEqual(aggr['min_prods'], 1)
+
+    def test_exercise_rxn_descriptor_transforms(self):
+        # another test that doesn't test much, it simply executes queries,
+        # hoping for regressions
+        for desc in (
+                'numreactants', 
+                'numproducts', 
+                'numagents', 
+        ):
+            kwargs = {
+                'rxn__{}__gt'.format(desc): 0,
+            }
+            _ = ReactionModel.objects.filter(**kwargs).count()
+
+    def test_exercise_rxn_functions(self):
+        for func in (
+                NUMREACTANTS,
+                NUMPRODUCTS,
+                NUMAGENTS,
+                REACTION_TO_SMILES,
+                REACTION_TO_SMARTS,
+                REACTION_TO_CTAB,
+        ):
+            _ = list(ReactionModel.objects.annotate(result=func('rxn')))
 
 
 class BfpFieldTest1(TestCase):
