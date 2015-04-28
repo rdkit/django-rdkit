@@ -16,4 +16,4 @@ so that their values can be set and queried without leaving the python domain::
   In [45]: print(config.tanimoto_threshold)
   0.5
 
-As you may notice from the examples, the main difference should consist in a minor change in the naming convention. The cartridge defines these parameters with a name starting with an ``rdkit.`` prefix. In naming the corresponding attributes of the ``config`` object this prefix is dropped.
+As you may notice from the examples, the main difference compared to the RDKit cartridge should consist in a minor change in the naming convention. The cartridge defines these parameters with a name starting with an ``rdkit.`` prefix. In naming the corresponding attributes of the ``config`` object this prefix is dropped.
