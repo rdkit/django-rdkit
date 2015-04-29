@@ -7,6 +7,9 @@ Most of the database functions implemented by the cartridge are also exposed thr
 
 For consistency, all function names are defined as uppercase (this is not probably the prettiest solution, but it's easy to remember and unlikely to produce name clashes).
 
+Functions
+---------
+
 - ``HBA``
 - ``HBD``
 - ``NUMATOMS``
@@ -95,3 +98,8 @@ For consistency, all function names are defined as uppercase (this is not probab
 - ``TVERSKY_SML``
 - ``TANIMOTO_DIST``
 - ``DICE_DIST``
+
+Aggregates
+----------
+
+- ``FMCS``

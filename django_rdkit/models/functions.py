@@ -146,3 +146,13 @@ class DICE_DIST(DistanceExpression):
 
 
 __all__.append('DICE_DIST')
+
+
+class FMCS(models.Aggregate):
+    function = 'fmcs'
+    def __init__(self, expression):
+        super(FMCS, self).__init__(expression, output_field=models.CharField())
+
+
+__all__.append('FMCS')
+
