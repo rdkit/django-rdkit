@@ -10,8 +10,8 @@ PostgreSQL and the RDKit cartridge should be installed and running on the system
   $ createdb django_rdkit_tutorial
 
 
-Creation of the django project
-------------------------------
+Creation of the tutorial project
+--------------------------------
 
 Create a new skeleton django project named ``tutorial_project``::
 
@@ -150,7 +150,7 @@ The initial import may therefore be performed with code similar to the following
   
   In [3]: def chembl(path, limit=None):
      ...:     count = 0
-     ...:     with open(path, 'rt) as f:
+     ...:     with open(path, 'rt') as f:
      ...:         next(f) # skip header
      ...:         for line in f:
      ...:             name, smiles = line.split()[:2]
