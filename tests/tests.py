@@ -186,7 +186,8 @@ class RxnFieldTest(TestCase):
         for smiles in REACTION_SMILES_SAMPLE:
             ReactionModel.objects.create(rxn=smiles)
         for smarts in REACTION_SMARTS_SAMPLE:
-            ReactionModel.objects.create(rxn=Chem.ReactionFromSmarts(smarts))
+            ReactionModel.objects.create(
+                rxn=Chem.ReactionFromSmarts(str(smarts)))
 
     def test_products_count(self):
         self.assertEqual(
