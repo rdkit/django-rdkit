@@ -23,7 +23,7 @@ One simple way to integrate this operation within a django project consists in i
       'django_rdkit',
   )
 
-When the database is configured a migration will be this way executed, ensuring that that the RDKit extension is created.
+A migration will be this way automatically included in the database configuration, ensuring that that the RDKit extension is created (please note that creating an extension requires database superuser privileges).
 
 Moreover, efficient execution of structure and similarity searches requires the creation of an additional GiST index::
 
