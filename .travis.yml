@@ -1,0 +1,44 @@
+# adapted from http://conda.pydata.org/docs/travis.html
+# and from https://github.com/rdkit/rdkit/blob/master/.travis.yml
+language: python
+
+python:
+ # We don't actually use the Travis Python, but this keeps it organized.
+ - "2.7"
+ - "3.4"
+
+env:
+ - PGPORT=54321 PGDATA=$HOME/PGDATA
+
+before_install:
+ # download and install miniconda
+ - wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+ - bash miniconda.sh -b -p $HOME/conda
+ - export PATH="$HOME/conda/bin:$PATH"
+ - hash -r
+ - conda config --set always_yes yes --set changeps1 no
+ - conda update -q conda
+ # Useful for debugging any issues with conda
+ - conda info -a
+
+ # create and activate the build/test environment
+ - conda create -q -n tenv python=$TRAVIS_PYTHON_VERSION
+ - source activate tenv
+
+install:
+ - conda install -q django psycopg2
+ - conda install -q -c rdkit rdkit-postgresql
+
+before_script:
+ - python setup.py develop
+
+ - initdb
+ # ensure that the rdkit extension is loaded at process startup
+ - echo "shared_preload_libraries = 'rdkit'" >> $PGDATA/postgresql.conf
+
+script:
+ - pg_ctl start -l $PGDATA/log.txt
+ - sleep 5 # just make sure that postgres startup has completed
+ - python ./runtests.py
+ - pg_ctl stop
+
