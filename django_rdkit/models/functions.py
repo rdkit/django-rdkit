@@ -40,6 +40,10 @@ for function, fieldkls in [('mol', MolField),
                            ('mol_inchi', models.TextField),
                            ('mol_inchikey', models.TextField),
                            ('mol_formula', models.TextField),
+                           ('is_valid_smiles', models.BooleanField),
+                           ('is_valid_ctab', models.BooleanField),
+                           ('is_valid_smarts', models.BooleanField),
+                           ('is_valid_mol_pkl', models.BooleanField),
                        ]:
     _F = type(str(function.upper()), (_Func,),
              { 'function': function, 'default_output_field': fieldkls(),})
