@@ -40,10 +40,6 @@ for function, fieldkls in [('mol', MolField),
                            ('mol_inchi', models.TextField),
                            ('mol_inchikey', models.TextField),
                            ('mol_formula', models.TextField),
-                           ('is_valid_smiles', models.BooleanField),
-                           ('is_valid_ctab', models.BooleanField),
-                           ('is_valid_smarts', models.BooleanField),
-                           ('is_valid_mol_pkl', models.BooleanField),
                        ]:
     _F = type(str(function.upper()), (_Func,),
              { 'function': function, 'default_output_field': fieldkls(),})
@@ -51,8 +47,12 @@ for function, fieldkls in [('mol', MolField),
     __all__.append(_F.__name__)
 
 
+class ValidatorFunc(_Func):
+    template = '%(function)s(cstring(%(expressions)s))'
+
+
 for validator in ['is_valid_smiles', 'is_valid_smarts', 'is_valid_ctab']:
-    _F = type(str(validator.upper()), (_Func,),
+    _F = type(str(validator.upper()), (ValidatorFunc,),
              { 'function': validator,
                'default_output_field': models.BooleanField(),})
     setattr(module, _F.__name__, _F)

@@ -22,6 +22,21 @@ class BfpModel(models.Model):
     bfp = models.BfpField(null=True)
 
 
+class SmilesModel(models.Model):
+
+    smiles = models.CharField(max_length=2048, blank=True, null=False)
+
+
+class SmartsModel(models.Model):
+
+    smarts = models.CharField(max_length=2048, blank=True, null=False)
+
+
+class CtabModel(models.Model):
+
+    ctab = models.TextField(blank=True, null=False)
+
+
 #class TestModel(models.Model):#
 #
 #    molecule = models.MolField()

@@ -350,4 +350,50 @@ class SfpFieldTest2(TestCase):
         self.assertEqual(objs.count(), 2)
 
 
-        
+class IsValidSmilesTest(TestCase):
+
+    def setUp(self):
+        for smiles in ('c1ccccc1', 'whatever', 'c1cccc1', 'CCCO'):
+            _ = SmilesModel.objects.create(smiles=smiles)
+    
+    def test_is_valid_smiles(self):
+        qs = SmilesModel.objects.annotate(valid=IS_VALID_SMILES('smiles'))
+        valid = qs.values_list('valid', flat=True)
+        self.assertTrue(valid[0])
+        self.assertFalse(valid[1])
+        self.assertFalse(valid[2])
+        self.assertTrue(valid[3])
+
+
+class IsValidCtabTest(TestCase):
+
+    def setUp(self):
+        mol = Chem.MolFromSmiles('c1cocc1')
+        CtabModel.objects.create(ctab=Chem.MolToMolBlock(mol))
+        CtabModel.objects.create(ctab='rubbish')
+    
+    def test_is_valid_ctab(self):
+        qs = CtabModel.objects.annotate(valid=IS_VALID_CTAB('ctab'))
+        valid = qs.values_list('valid', flat=True)
+        self.assertTrue(valid[0])
+        self.assertFalse(valid[1])
+
+
+class IsValidSmartsTest(TestCase):
+
+    def setUp(self):
+        for smarts in ('c1ccc[c,n]c1', 
+                       'whatever', 
+                       '(F)F.[c1:1][c:2rubbish', 
+                       'C(F)(F)F.[c1:1][c:2][c:3][c:4]c[c1:5]'):
+            _ = SmartsModel.objects.create(smarts=smarts)
+    
+    def test_is_valid_smiles(self):
+        qs = SmartsModel.objects.annotate(valid=IS_VALID_SMARTS('smarts'))
+        valid = qs.values_list('valid', flat=True)
+        self.assertTrue(valid[0])
+        self.assertFalse(valid[1])
+        self.assertFalse(valid[2])
+        self.assertTrue(valid[3])
+
+
