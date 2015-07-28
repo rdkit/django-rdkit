@@ -28,12 +28,12 @@ for mixin in MOL_DESCRIPTOR_MIXINS:
 
 
 for function, fieldkls in [('mol', MolField),
-                           ('mol_from_smiles', MolField),
-                           ('mol_from_smarts', MolField),
-                           ('mol_from_ctab', MolField),
+                           #('mol_from_smiles', MolField),
+                           #('mol_from_smarts', MolField),
+                           #('mol_from_ctab', MolField),
                            ('qmol',  MolField),
-                           ('qmol_from_smiles', MolField),
-                           ('qmol_from_ctab', MolField),
+                           #('qmol_from_smiles', MolField),
+                           #('qmol_from_ctab', MolField),
                            ('mol_to_smiles', models.CharField),
                            ('mol_to_smarts', models.CharField),
                            ('mol_to_ctab', models.TextField),
@@ -46,6 +46,37 @@ for function, fieldkls in [('mol', MolField),
     setattr(module, _F.__name__, _F)
     __all__.append(_F.__name__)
 
+
+class ConstructorFunc(_Func):
+    #template = '%(function)s(cstring(%(expressions)s))'
+
+    def as_sql(self, compiler, connection, function=None, template=None):
+        connection.ops.check_expression_support(self)
+        sql_parts = []
+        params = []
+        for arg in self.source_expressions:
+            arg_sql, arg_params = compiler.compile(arg)
+            sql_parts.append(arg_sql)
+            params.extend(arg_params)
+        if function is None:
+            self.extra['function'] = self.extra.get('function', self.function)
+        else:
+            self.extra['function'] = function
+        sql_parts[0] = 'cstring(%s)' % sql_parts[0]
+        self.extra['expressions'] = self.extra['field'] = self.arg_joiner.join(sql_parts)
+        template = template or self.extra.get('template', self.template)
+        return template % self.extra, params
+
+
+for constructor in ['mol_from_smiles', 'mol_from_smarts', 'mol_from_ctab',
+                    'qmol_from_smiles', 'qmol_from_ctab',
+                ]:
+    _F = type(str(constructor.upper()), (ConstructorFunc,),
+              { 'function': constructor,
+                'default_output_field': MolField(),})
+    setattr(module, _F.__name__, _F)
+    __all__.append(_F.__name__)
+    
 
 class ValidatorFunc(_Func):
     template = '%(function)s(cstring(%(expressions)s))'

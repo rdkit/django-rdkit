@@ -25,6 +25,7 @@ class BfpModel(models.Model):
 class SmilesModel(models.Model):
 
     smiles = models.CharField(max_length=2048, blank=True, null=False)
+    molecule = models.MolField(null=True)
 
 
 class SmartsModel(models.Model):

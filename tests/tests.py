@@ -397,3 +397,18 @@ class IsValidSmartsTest(TestCase):
         self.assertTrue(valid[3])
 
 
+class MolFromSmilesTest(TestCase):
+
+    def setUp(self):
+        for smiles in ('c1ccccc1', 'whatever', 'c1cccc1', 'CCCO',):
+            _ = SmilesModel.objects.create(smiles=smiles)
+    
+    def test_mol_from_smiles(self):
+        qs = SmilesModel.objects.annotate(valid=IS_VALID_SMILES('smiles'))
+        qs = qs.filter(valid=True)
+        updated = qs.update(molecule=MOL_FROM_SMILES('smiles'))
+        self.assertEqual(updated, 2)
+        isnull_count = SmilesModel.objects.filter(molecule__isnull=True).count()
+        self.assertEqual(isnull_count, 2)
+
+

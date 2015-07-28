@@ -64,7 +64,7 @@ class MolField(Field):
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
         supported_lookup_types = (
-            ['hassubstruct', 'issubstruct', 'exact',] +
+            ['hassubstruct', 'issubstruct', 'exact', 'isnull',] +
             [T.lookup_name for T in MOL_DESCRIPTOR_TRANFORMS]
         )
         if lookup_type in supported_lookup_types:
@@ -104,7 +104,7 @@ class RxnField(Field):
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
         supported_lookup_types = (
-            ['hassubstruct', 'issubstruct',] + #'exact',] +
+            ['hassubstruct', 'issubstruct', 'isnull',] + #'exact',] +
             [T.lookup_name for T in RXN_DESCRIPTOR_TRANFORMS]
         )
         if lookup_type in supported_lookup_types:
@@ -156,7 +156,7 @@ class BfpField(Field):
 
     def get_prep_lookup(self, lookup_type, value):
         if lookup_type in [
-                'lt', 'lte', 'exact', 'gte', 'gt', 'ne', 
+                'lt', 'lte', 'exact', 'isnull', 'gte', 'gt', 'ne', 
                 'tanimoto', 'dice']:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
@@ -174,7 +174,7 @@ class SfpField(Field):
     
     def get_prep_lookup(self, lookup_type, value):
         if lookup_type in [
-                'lt', 'lte', 'exact', 'gte', 'gt', 'ne', 
+                'lt', 'lte', 'exact', 'isnull', 'gte', 'gt', 'ne', 
                 'tanimoto', 'dice']:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
