@@ -7,7 +7,7 @@ from django.db.models.fields import *
 
 from rdkit.Chem import AllChem as Chem
 from rdkit import DataStructs
-from rdkit.DataStructs import ExplicitBitVect, SparseIntVect
+from rdkit.DataStructs import ExplicitBitVect
 
 
 __all__ = ["MolField", "RxnField", "BfpField", "SfpField",]
