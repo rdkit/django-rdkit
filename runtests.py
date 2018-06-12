@@ -33,12 +33,11 @@ def runtests():
     parent = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, parent)
 
-    # if the postgresql_psycopg2 backend is used and the 'tests' application
-    # is not migrated, it will be synced before the rdkit extension is
-    # installed and therefore causing errors.
-    call_command('makemigrations', 'tests')
-
-    #call_command('sqlmigrate', 'tests', '0001')
+    if django.VERSION < (1, 11):
+        # if the postgresql_psycopg2 backend is used and the 'tests' application
+        # is not migrated, it will be synced before the rdkit extension is
+        # installed and therefore causing errors.
+        call_command('makemigrations', 'tests')
 
     sys.exit(call_command('test', 'tests'))
 
