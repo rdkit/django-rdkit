@@ -14,7 +14,7 @@ def get_packages(package):
 
 setup(
     name='django-rdkit',
-    version='0.0.5',
+    version='0.0.6',
     description='',
     packages = get_packages('django_rdkit'),
     zip_safe=False,
