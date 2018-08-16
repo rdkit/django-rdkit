@@ -25,7 +25,7 @@ install:
  # create and activate the build/test environment
  - conda create -q -n tenv python=$TRAVIS_PYTHON_VERSION
  - source activate tenv
- - conda install -q django=1.11 psycopg2
+ - conda install -q django psycopg2
  - conda install -q -c rdkit rdkit rdkit-postgresql
  - python setup.py develop
 
