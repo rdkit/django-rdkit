@@ -15,7 +15,8 @@ __all__ = ["MolField", "RxnField", "BfpField", "SfpField",]
 
 ##########################################
 # Molecule Field
-# Updated 12/22/2018 to allow for non-SMILES strings to be parsed & fixed compatibility of mol objects with operators
+# Updated 10/22/2018 to allow for non-SMILES strings to be parsed & fixed compatibility of mol objects with operators
+# UPDATED 10/23/2018 to specify an appropriate default form field input
 
 class MolField(Field):
 
@@ -81,7 +82,12 @@ class MolField(Field):
         if lookup_type in supported_lookup_types:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
+   
+    def formfield(self, **kwargs):
+        # Use TextField as default input form to accommodate line breaks needed for molBlocks
+        defaults = {'form_class': forms.CharField, 'strip': False, 'widget':forms.Textarea}
+        defaults.update(kwargs)
+        return super().formfield(**defaults)
 
 ##########################################
 # Reaction Field
