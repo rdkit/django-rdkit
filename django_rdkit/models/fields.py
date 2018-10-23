@@ -15,7 +15,7 @@ __all__ = ["MolField", "RxnField", "BfpField", "SfpField",]
 
 ##########################################
 # Molecule Field
-# Updated 12/22/2018 to force presentation of SMILES in queries
+# Updated 12/22/2018 to allow for non-SMILES strings to be parsed & fixed compatibility of mol objects with operators
 
 class MolField(Field):
 
@@ -66,11 +66,10 @@ class MolField(Field):
         # convert the Molecule instance to the value used by the
         # db driver
         if isinstance(value, six.string_types):
-            # parse string NOT assuming SMILES
+            # The string case. Don't assume SMILES
             value = self.to_python(str(value))
         if isinstance(value, Chem.Mol):
-            #rdkit cartridge will only accept SMILES here
-            value = Chem.MolToSmiles(value)
+            value = six.memoryview(value.ToBinary())
         return value
 
     def get_prep_lookup(self, lookup_type, value):
@@ -207,7 +206,7 @@ class HasSubstruct(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s @> %s' % (lhs, rhs), params
+        return '%s @> mol_from_pkl(%s)' % (lhs, rhs), params
 
 
 MolField.register_lookup(HasSubstruct)
@@ -222,7 +221,7 @@ class HasSubstructFP(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s ?> %s' % (lhs, rhs), params
+        return '%s ?> mol_from_pkl(%s)' % (lhs, rhs), params
 
 
 RxnField.register_lookup(HasSubstructFP)
@@ -237,7 +236,7 @@ class IsSubstruct(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s <@ %s' % (lhs, rhs), params
+        return '%s <@ mol_from_pkl(%s)' % (lhs, rhs), params
 
 MolField.register_lookup(IsSubstruct)
 RxnField.register_lookup(IsSubstruct)
@@ -251,7 +250,7 @@ class IsSubstructFP(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s ?< %s' % (lhs, rhs), params
+        return '%s ?< mol_from_pkl(%s)' % (lhs, rhs), params
 
 RxnField.register_lookup(IsSubstructFP)
 
@@ -266,7 +265,7 @@ class SameStructure(Lookup):
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
         #return '%s @= %s' % (lhs, rhs), params
-        return '%s <@ %s AND %s @> %s' % (lhs, rhs, lhs, rhs), params + params
+        return '%s <@ mol_from_pkl(%s) AND %s @> mol_from_pkl(%s)' % (lhs, rhs, lhs, rhs), params + params
 
 MolField.register_lookup(SameStructure)
 
@@ -289,7 +288,7 @@ class DescriptorTransform(Transform):
 
     def as_sql(self, qn, connection):
         lhs, params = qn.compile(self.lhs)
-        return "%s(%s)" % (self.function, lhs), params
+        return "%s(mol_from_pkl(%s))" % (self.function, lhs), params
 
 
 ##########################################
@@ -394,7 +393,7 @@ class TanimotoSimilar(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s %%%% %s' % (lhs, rhs), params
+        return '%s %%%% mol_from_pkl(%s)' % (lhs, rhs), params
 
 
 BfpField.register_lookup(TanimotoSimilar)
@@ -409,7 +408,7 @@ class DiceSimilar(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s # %s' % (lhs, rhs), params
+        return '%s # mol_from_pkl(%s)' % (lhs, rhs), params
 
 
 BfpField.register_lookup(DiceSimilar)
@@ -424,7 +423,7 @@ class NotEqual(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s <> %s' % (lhs, rhs), params
+        return '%s <> mol_from_pkl(%s)' % (lhs, rhs), params
 
 
 BfpField.register_lookup(NotEqual)
