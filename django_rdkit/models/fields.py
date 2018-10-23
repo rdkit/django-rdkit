@@ -15,6 +15,7 @@ __all__ = ["MolField", "RxnField", "BfpField", "SfpField",]
 
 ##########################################
 # Molecule Field
+# Updated 12/22/2018 to force presentation of SMILES in queries
 
 class MolField(Field):
 
@@ -48,7 +49,14 @@ class MolField(Field):
             return value
         elif isinstance(value, six.string_types):
             # The string case. Assume a SMILES is passed.
-            return Chem.MolFromSmiles(str(value))
+            mol = Chem.MolFromSmiles(str(value))
+            if mol is None:
+                mol = Chem.MolFromMolBlock(str(value))
+            if mol is None:
+                mol = Chem.inchi.MolFromInchi(str(value))
+            if mol is None:
+                raise ValidationError("Invalid input for a Mol instance")
+            return mol
         elif isinstance(value, six.buffer_types):
             return Chem.Mol(bytes(value))
         else:
@@ -58,10 +66,11 @@ class MolField(Field):
         # convert the Molecule instance to the value used by the
         # db driver
         if isinstance(value, six.string_types):
-            # The string case. A SMILES is assumed.
-            value = Chem.MolFromSmiles(str(value))
+            # parse string NOT assuming SMILES
+            value = self.to_python(str(value))
         if isinstance(value, Chem.Mol):
-            value = six.memoryview(value.ToBinary())
+            #rdkit cartridge will only accept SMILES here
+            value = Chem.MolToSmiles(value)
         return value
 
     def get_prep_lookup(self, lookup_type, value):
@@ -192,7 +201,7 @@ class SfpField(Field):
 class HasSubstruct(Lookup):
 
     lookup_name = 'hassubstruct'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
@@ -222,7 +231,7 @@ RxnField.register_lookup(HasSubstructFP)
 class IsSubstruct(Lookup):
 
     lookup_name = 'issubstruct'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
@@ -250,7 +259,7 @@ RxnField.register_lookup(IsSubstructFP)
 class SameStructure(Lookup):
 
     lookup_name = 'exact'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
