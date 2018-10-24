@@ -294,7 +294,7 @@ class DescriptorTransform(Transform):
 
     def as_sql(self, qn, connection):
         lhs, params = qn.compile(self.lhs)
-        return "%s(mol_from_pkl(%s))" % (self.function, lhs), params
+        return "%s(%s)" % (self.function, lhs), params
 
 
 ##########################################
@@ -399,7 +399,7 @@ class TanimotoSimilar(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s %%%% mol_from_pkl(%s)' % (lhs, rhs), params
+        return '%s %%%% %s' % (lhs, rhs), params
 
 
 BfpField.register_lookup(TanimotoSimilar)
@@ -414,7 +414,7 @@ class DiceSimilar(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s # mol_from_pkl(%s)' % (lhs, rhs), params
+        return '%s # %s' % (lhs, rhs), params
 
 
 BfpField.register_lookup(DiceSimilar)
@@ -429,7 +429,7 @@ class NotEqual(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s <> mol_from_pkl(%s)' % (lhs, rhs), params
+        return '%s <> %s' % (lhs, rhs), params
 
 
 BfpField.register_lookup(NotEqual)
