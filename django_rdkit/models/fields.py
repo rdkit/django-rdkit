@@ -49,15 +49,7 @@ class MolField(Field):
         if value is None or isinstance(value, Chem.Mol):
             return value
         elif isinstance(value, six.string_types):
-            # The string case. Assume a SMILES is passed.
-            mol = Chem.MolFromSmiles(str(value))
-            if mol is None:
-                mol = Chem.MolFromMolBlock(str(value))
-            if mol is None:
-                mol = Chem.inchi.MolFromInchi(str(value))
-            if mol is None:
-                raise ValidationError("Invalid input for a Mol instance")
-            return mol
+            return self.text_to_mol(value)
         elif isinstance(value, six.buffer_types):
             return Chem.Mol(bytes(value))
         else:
@@ -67,11 +59,20 @@ class MolField(Field):
         # convert the Molecule instance to the value used by the
         # db driver
         if isinstance(value, six.string_types):
-            # The string case. Don't assume SMILES
-            value = self.to_python(str(value))
+            value = self.text_to_mol(value)
         if isinstance(value, Chem.Mol):
             value = six.memoryview(value.ToBinary())
         return Func(value, function='mol_from_pkl')
+
+    @staticmethod
+    def text_to_mol(value):
+        value = str(value)
+        mol = (Chem.MolFromSmiles(value)
+            or Chem.MolFromMolBlock(value)
+            or Chem.inchi.MolFromInchi(value))
+        if mol is None:
+            raise ValidationError("Invalid input for a Mol instance")
+        return mol
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -82,7 +83,7 @@ class MolField(Field):
         if lookup_type in supported_lookup_types:
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
-   
+
     def formfield(self, **kwargs):
         # Use TextField as default input form to accommodate line breaks needed for molBlocks
         defaults = {'form_class': forms.CharField, 'strip': False, 'widget':forms.Textarea}
