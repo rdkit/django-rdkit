@@ -62,6 +62,8 @@ class MolField(Field):
             value = self.text_to_mol(value)
         if isinstance(value, Chem.Mol):
             value = six.memoryview(value.ToBinary())
+        if value is None:
+            return None
         return Func(value, function='mol_from_pkl')
 
     @staticmethod

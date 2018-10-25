@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
             name='MoleculeModel',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('molecule', django_rdkit.models.fields.MolField()),
+                ('molecule', django_rdkit.models.fields.MolField(null=True)),
             ],
         ),
         migrations.CreateModel(
