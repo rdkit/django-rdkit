@@ -71,7 +71,7 @@ class MolField(Field):
             value = self.to_python(str(value))
         if isinstance(value, Chem.Mol):
             value = six.memoryview(value.ToBinary())
-        return value
+        return 'mol_from_pkl(%s)' % value
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -206,13 +206,13 @@ class SfpField(Field):
 class HasSubstruct(Lookup):
 
     lookup_name = 'hassubstruct'
-    prepare_rhs = True
+    prepare_rhs = False
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s @> mol_from_pkl(%s)' % (lhs, rhs), params
+        return '%s @> %s' % (lhs, rhs), params
 
 
 MolField.register_lookup(HasSubstruct)
@@ -227,7 +227,7 @@ class HasSubstructFP(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s ?> mol_from_pkl(%s)' % (lhs, rhs), params
+        return '%s ?> %s' % (lhs, rhs), params
 
 
 RxnField.register_lookup(HasSubstructFP)
@@ -236,13 +236,13 @@ RxnField.register_lookup(HasSubstructFP)
 class IsSubstruct(Lookup):
 
     lookup_name = 'issubstruct'
-    prepare_rhs = True
+    prepare_rhs = False
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s <@ mol_from_pkl(%s)' % (lhs, rhs), params
+        return '%s <@ %s' % (lhs, rhs), params
 
 MolField.register_lookup(IsSubstruct)
 RxnField.register_lookup(IsSubstruct)
@@ -256,7 +256,7 @@ class IsSubstructFP(Lookup):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
-        return '%s ?< mol_from_pkl(%s)' % (lhs, rhs), params
+        return '%s ?< %s' % (lhs, rhs), params
 
 RxnField.register_lookup(IsSubstructFP)
 
@@ -264,14 +264,14 @@ RxnField.register_lookup(IsSubstructFP)
 class SameStructure(Lookup):
 
     lookup_name = 'exact'
-    prepare_rhs = True
+    prepare_rhs = False
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
         #return '%s @= %s' % (lhs, rhs), params
-        return '%s <@ mol_from_pkl(%s) AND %s @> mol_from_pkl(%s)' % (lhs, rhs, lhs, rhs), params + params
+        return '%s <@ %s AND %s @> %s' % (lhs, rhs, lhs, rhs), params + params
 
 MolField.register_lookup(SameStructure)
 
