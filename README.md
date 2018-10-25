@@ -1,2 +1,2 @@
 # django-rdkit
-Change MolField and assocaited functions to ensure pickled mol objects are sent to the db.
+To install django-rdkit: pip install git+https://github.com/rdkit/django-rdkit.git
