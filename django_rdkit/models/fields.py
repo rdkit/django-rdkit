@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django import VERSION as DJANGO_VERSION
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
-from django.db.models import Lookup, Transform
+from django.db.models import Lookup, Transform, Func
 from django.db.models.fields import *
 
 from rdkit.Chem import AllChem as Chem
@@ -71,7 +71,7 @@ class MolField(Field):
             value = self.to_python(str(value))
         if isinstance(value, Chem.Mol):
             value = six.memoryview(value.ToBinary())
-        return 'mol_from_pkl(%s)' % value
+        return Func(value, function='mol_from_pkl')
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -206,7 +206,7 @@ class SfpField(Field):
 class HasSubstruct(Lookup):
 
     lookup_name = 'hassubstruct'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
@@ -236,7 +236,7 @@ RxnField.register_lookup(HasSubstructFP)
 class IsSubstruct(Lookup):
 
     lookup_name = 'issubstruct'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
@@ -264,7 +264,7 @@ RxnField.register_lookup(IsSubstructFP)
 class SameStructure(Lookup):
 
     lookup_name = 'exact'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
