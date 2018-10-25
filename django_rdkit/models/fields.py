@@ -15,8 +15,6 @@ __all__ = ["MolField", "RxnField", "BfpField", "SfpField",]
 
 ##########################################
 # Molecule Field
-# Updated 10/22/2018 to allow for non-SMILES strings to be parsed & fixed compatibility of mol objects with operators
-# UPDATED 10/23/2018 to specify an appropriate default form field input
 
 class MolField(Field):
 
