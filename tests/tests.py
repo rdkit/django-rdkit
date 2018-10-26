@@ -28,6 +28,9 @@ class MolFieldTest(TestCase):
 
         objs = MoleculeModel.objects.filter(molecule='Nc1ccc(Cl)nc1')
         self.assertEqual(objs.count(), 1)
+        
+        objs = MoleculeModel.objects.filter(molecule=Chem.MolFromSmiles('Nc1ccc(Cl)nc1'))
+        self.assertEqual(objs.count(), 1)
 
     def test_hassubstruct_lookup(self):
 
@@ -64,6 +67,9 @@ class MolFieldTest(TestCase):
         self.assertEqual(objs.count(), 2)
 
         objs = MoleculeModel.objects.filter(molecule__issubstruct='CC[N+]([O-])(CC)CCCN1c2ccccc2S(=O)c2ccccc21')
+        self.assertEqual(objs.count(), 4)
+        
+        objs = MoleculeModel.objects.filter(molecule__issubstruct=Chem.MolFromSmiles('CC[N+]([O-])(CC)CCCN1c2ccccc2S(=O)c2ccccc21'))
         self.assertEqual(objs.count(), 4)
 
     def test_descriptor_AMW(self):
