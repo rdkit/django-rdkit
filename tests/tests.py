@@ -53,6 +53,10 @@ class MolFieldTest(TestCase):
         qmol = QMOL(Value('c1[c,n]cccc1'))
         objs = MoleculeModel.objects.filter(molecule__hassubstruct=qmol)
         self.assertEqual(objs.count(), cnt3)
+        
+        objs = MoleculeModel.objects.filter(molecule__hassubstruct=Chem.MolFromSmiles('C1=CN=CC=C1'))
+        cnt4 = objs.count()
+        self.assertEqual(cnt2, 7)
 
     def test_issubstruct_lookup(self):
 
