@@ -4,7 +4,7 @@ from django_rdkit import models
 
 class MoleculeModel(models.Model):
 
-    molecule = models.MolField()
+    molecule = models.MolField(null=True)
 
 
 class ReactionModel(models.Model):
@@ -43,5 +43,3 @@ class CtabModel(models.Model):
 #    molecule = models.MolField()
 #    sfp = models.SfpField()
 #    bfb = models.BfpField()
-
-

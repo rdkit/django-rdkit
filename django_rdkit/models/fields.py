@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django import VERSION as DJANGO_VERSION
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
-from django.db.models import Lookup, Transform
+from django.db.models import Lookup, Transform, Func
 from django.db.models.fields import *
 
 from rdkit.Chem import AllChem as Chem
@@ -47,8 +47,7 @@ class MolField(Field):
         if value is None or isinstance(value, Chem.Mol):
             return value
         elif isinstance(value, six.string_types):
-            # The string case. Assume a SMILES is passed.
-            return Chem.MolFromSmiles(str(value))
+            return self.text_to_mol(value)
         elif isinstance(value, six.buffer_types):
             return Chem.Mol(bytes(value))
         else:
@@ -58,11 +57,22 @@ class MolField(Field):
         # convert the Molecule instance to the value used by the
         # db driver
         if isinstance(value, six.string_types):
-            # The string case. A SMILES is assumed.
-            value = Chem.MolFromSmiles(str(value))
+            value = self.text_to_mol(value)
         if isinstance(value, Chem.Mol):
             value = six.memoryview(value.ToBinary())
-        return value
+        if value is None:
+            return None
+        return Func(value, function='mol_from_pkl')
+
+    @staticmethod
+    def text_to_mol(value):
+        value = str(value)
+        mol = (Chem.MolFromSmiles(value)
+            or Chem.MolFromMolBlock(value)
+            or Chem.inchi.MolFromInchi(value))
+        if mol is None:
+            raise ValidationError("Invalid input for a Mol instance")
+        return mol
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -74,6 +84,11 @@ class MolField(Field):
             return value
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
+    def formfield(self, **kwargs):
+        # Use TextField as default input form to accommodate line breaks needed for molBlocks
+        defaults = {'form_class': forms.CharField, 'strip': False, 'widget':forms.Textarea}
+        defaults.update(kwargs)
+        return super().formfield(**defaults)
 
 ##########################################
 # Reaction Field
@@ -192,7 +207,7 @@ class SfpField(Field):
 class HasSubstruct(Lookup):
 
     lookup_name = 'hassubstruct'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
@@ -222,7 +237,7 @@ RxnField.register_lookup(HasSubstructFP)
 class IsSubstruct(Lookup):
 
     lookup_name = 'issubstruct'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
@@ -250,7 +265,7 @@ RxnField.register_lookup(IsSubstructFP)
 class SameStructure(Lookup):
 
     lookup_name = 'exact'
-    prepare_rhs = False
+    prepare_rhs = True
 
     def as_sql(self, qn, connection):
         lhs, lhs_params = self.process_lhs(qn, connection)
