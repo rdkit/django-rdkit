@@ -5,6 +5,8 @@ from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Lookup, Transform, Func
 from django.db.models.fields import *
+from django.core.exceptions import ValidationError
+from django import forms
 
 from rdkit.Chem import AllChem as Chem
 from rdkit import DataStructs
