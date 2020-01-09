@@ -1,3 +1,8 @@
+## [0.2.0]
+### Changed
+- Updated for Django 3.0
+- Support for Python2 was removed
+
 ## [Unreleased]
 ### Added
 - README and CHANGELOG files

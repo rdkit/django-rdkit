@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 from django import VERSION as DJANGO_VERSION
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Lookup, Transform, Func
 from django.db.models.fields import *
@@ -40,7 +37,7 @@ class MolField(Field):
     def select_format(self, compiler, sql, params):
         return 'mol_to_pkl(%s)' % sql, params
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection):
         if value is None:
             return value
         return Chem.Mol(bytes(value))
@@ -48,9 +45,9 @@ class MolField(Field):
     def to_python(self, value):
         if value is None or isinstance(value, Chem.Mol):
             return value
-        elif isinstance(value, six.string_types):
+        elif isinstance(value, str):
             return self.text_to_mol(value)
-        elif isinstance(value, six.buffer_types):
+        elif isinstance(value, (bytes, bytearray, memoryview)):
             return Chem.Mol(bytes(value))
         else:
             raise ValidationError("Invalid input for a Mol instance")
@@ -58,10 +55,10 @@ class MolField(Field):
     def get_prep_value(self, value):
         # convert the Molecule instance to the value used by the
         # db driver
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = self.text_to_mol(value)
         if isinstance(value, Chem.Mol):
-            value = six.memoryview(value.ToBinary())
+            value = memoryview(value.ToBinary())
         if value is None:
             return None
         return Func(value, function='mol_from_pkl')
@@ -102,7 +99,7 @@ class RxnField(Field):
     def db_type(self, connection):
         return 'reaction'
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection):
         if value is None:
             return value
         return Chem.ReactionFromSmarts(value, useSmiles=True)
@@ -110,7 +107,7 @@ class RxnField(Field):
     def to_python(self, value):
         if value is None or isinstance(value, Chem.ChemicalReaction):
             return value
-        elif isinstance(value, six.string_types):
+        elif isinstance(value, str):
             # The string case. A reaction SMILES is expected.
             return Chem.ReactionFromSmarts(str(value), useSmiles=True)
         else:
@@ -157,7 +154,7 @@ class BfpField(Field):
     def select_format(self, compiler, sql, params):
         return 'bfp_to_binary_text(%s)' % sql, params
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection):
         if value is None:
             return value
         return DataStructs.CreateFromBinaryText(bytes(value))
@@ -165,7 +162,7 @@ class BfpField(Field):
     def to_python(self, value):
         if value is None or isinstance(value, ExplicitBitVect):
             return value
-        elif isinstance(value, six.buffer_types):
+        elif isinstance(value, (bytes, bytearray, memoryview)):
             return DataStructs.CreateFromBinaryText(bytes(value))
         else:
             raise ValidationError("Invalid input for a Bfp instance")
@@ -174,7 +171,7 @@ class BfpField(Field):
         # convert the ExplicitBitVect instance to the value used by the
         # db driver
         if isinstance(value, ExplicitBitVect):
-            value = six.memoryview(DataStructs.BitVectToBinaryText(value))
+            value = memoryview(DataStructs.BitVectToBinaryText(value))
         return value
 
     def get_prep_lookup(self, lookup_type, value):
