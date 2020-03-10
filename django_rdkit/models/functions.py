@@ -38,6 +38,7 @@ for function, fieldkls in [('mol', MolField),
                            ('mol_inchi', models.TextField),
                            ('mol_inchikey', models.TextField),
                            ('mol_formula', models.TextField),
+                           ('mol_to_svg', models.TextField),
                        ]:
     _F = type(str(function.upper()), (_Func,),
              { 'function': function, 'default_output_field': fieldkls(),})

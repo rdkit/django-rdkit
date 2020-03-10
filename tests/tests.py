@@ -201,6 +201,7 @@ class MolFieldTest(TestCase):
                 MOL_INCHI,
                 MOL_INCHIKEY,
                 MOL_FORMULA,
+                MOL_TO_SVG,
         ):
             _ = list(MoleculeModel.objects.annotate(result=func('molecule')))
 
