@@ -25,13 +25,6 @@ One simple way to integrate this operation within a django project consists in i
 
 A migration will be this way automatically included in the database configuration, ensuring that that the RDKit extension is created (please note that creating an extension requires database superuser privileges).
 
-Moreover, efficient execution of structure and similarity searches requires the creation of an additional GiST index::
-
-  CREATE INDEX index_name ON table_name USING GIST (column_name);
-
-The creation of this custom index is also supported with a migration operation. Users should include this operation in the implementation of a custom migration for the fields that may require it.
-
-
 Migration Operations
 --------------------
 .. module:: django_rdkit.operations
@@ -41,8 +34,3 @@ Migration Operations
 .. class:: RDKitExtension( )
 
 An ``Operation`` subclass that will install the RDKit cartridge (install ``django_rdkit`` as a django application to include a migration that wraps this operation).
-
-
-.. class:: GiSTIndex(model_name, name, index_name=None)
-
-An ``Operation`` subclass that wraps the management of a GiST index for field ``name`` of model ``model_name``. The optional ``index_name`` parameter allows customizing the name of the created index.
