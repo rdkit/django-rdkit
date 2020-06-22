@@ -178,26 +178,26 @@ The import loop may take some time, consider using the ``limit`` parameter to sh
   In [8]: Compound.objects.count()
   Out[8]: 1455712
 
-In order to efficiently perform structural queries on the imported compounds, a database index must be created. This operation can be implemented with a database migration. Execute the following command to create an empty skeleton for this migration::
+In order to efficiently perform structural queries on the imported compounds, a database index must be created. This operation can be implemented with adding a special internal class ``Meta`` to the model and assigning the ``indexes`` the corresponding index::
 
-  $ python manage.py makemigrations --empty --name create_compound_molecule_index tutorial_application
+  from django_rdkit import models
+  from django.contrib.postgres.indexes import GistIndex
+
+  class Compound(models.Model):
+  
+      name = models.CharField(max_length=256)
+      molecule = models.MolField()
+      
+      class Meta:
+        indexes = [
+            GistIndex(fields=['molecule']),
+        ]
+
+Execute the following command to create a migration::
+
+  $ python manage.py makemigrations --name create_compound_molecule_index tutorial_application
   Migrations for 'tutorial_application':
     0002_create_compound_molecule_index.py:
-
-Now open the file ``tutorial_application\migrations\0002_create_compound_molecule_index.py`` with a text editor and edit a couple of lines in order to import the ``GiSTIndex`` operation and apply it. The resulting migration module should look similar to the following::
-
-  from django.db import models, migrations
-  from django_rdkit.operations import GiSTIndex
-  
-  class Migration(migrations.Migration):
-  
-      dependencies = [
-          ('tutorial_application', '0001_initial'),
-      ]
-  
-      operations = [
-          GiSTIndex('Compound', 'molecule')
-      ]
 
 When done, save your changes and run the migration (depending on the number of structures imported into the model, the indexing may take quite some time to complete)::
 
@@ -341,27 +341,31 @@ The fingerpring columns may be filled with data that is computed with an update 
      ...: )
   Out[3]: 1455712
 
-Once this query has completed, an index must still be added on the column (or columns) that will be frequently used to perform similarity queries. This database administration step may be again integrated into the management of the django project by means of a custom migration. First create an empty migration::
+Once this query has completed, an index must still be added on the column (or columns) that will be frequently used to perform similarity queries. This database administration step may be again be another entry in the ``indexes`` field of the ``Meta`` internal class. First, add an index to the ``indexes``::
 
-  $ python manage.py makemigrations --empty --name create_compound_mfp2_index tutorial_application
+  from django_rdkit import models
+  from django.contrib.postgres.indexes import GistIndex
+  
+  class Compound(models.Model):
+  
+      name = models.CharField(max_length=256)
+      molecule = models.MolField()
+      
+      torsionbv = models.BfpField(null=True)
+      mfp2 = models.BfpField(null=True)
+      ffp2 = models.BfpField(null=True)
+
+      class Meta:
+        indexes = [
+            GistIndex(fields=['molecule']),
+            GistIndex(fields=['mfp2']),
+        ]
+
+Second, create a migration::
+
+  $ python manage.py makemigrations --name create_compound_mfp2_index tutorial_application
   Migrations for 'tutorial_application':
     0004_create_compound_mfp2_index.py:
-
-Edit the file ``tutorial_application/migrations/0004_create_compound_mfp2_index.py`` to add the creation of a GiST index on the ``mfp2`` column::
-
-  from django.db import models, migrations
-  from django_rdkit.operations import GiSTIndex
-  
-  
-  class Migration(migrations.Migration):
-  
-      dependencies = [
-          ('tutorial_application', '0003_add_compound_fingerprint_fields'),
-      ]
-  
-      operations = [
-          GiSTIndex('Compound', 'mfp2')
-      ]
 
 And then run the migration to complete the preparation of the database::
 
