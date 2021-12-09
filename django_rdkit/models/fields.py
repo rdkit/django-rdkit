@@ -1,5 +1,5 @@
 from django import VERSION as DJANGO_VERSION
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.db.models import Lookup, Transform, Func
 from django.db.models.fields import *
 from django.core.exceptions import ValidationError
