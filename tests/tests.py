@@ -16,7 +16,7 @@ class MolFieldTest(TestCase):
 
     def test_insert_null(self):
         MoleculeModel.objects.create(molecule=None)
-        objs = MoleculeModel.objects.filter(molecule=None)
+        objs = MoleculeModel.objects.filter(molecule__isnull=True)
         self.assertEqual(objs.count(), 1)
 
     def test_assign_from_sql_expression(self):
@@ -204,6 +204,39 @@ class MolFieldTest(TestCase):
                 MOL_TO_SVG,
         ):
             _ = list(MoleculeModel.objects.annotate(result=func('molecule')))
+
+
+class MolFieldBulkTest(TestCase):
+
+    BATCH_SIZE = 25
+    assert BATCH_SIZE <= len(SMILES_SAMPLE) // 2
+
+    def setUp(self):
+        # pre-insert one batch
+        for smiles in SMILES_SAMPLE[:self.BATCH_SIZE]:
+            MoleculeModel.objects.create(molecule=smiles)
+
+    def test_bulk_create(self):
+        # do a bulk insertion for a second batch of MoleculeModel records
+        initial_count = MoleculeModel.objects.count()
+
+        new_records = [
+            MoleculeModel(molecule=smiles)
+            for smiles in SMILES_SAMPLE[self.BATCH_SIZE:2*self.BATCH_SIZE]
+            ]
+
+        MoleculeModel.objects.bulk_create(new_records)
+
+        self.assertEqual(MoleculeModel.objects.count(), initial_count + len(new_records))
+
+    def test_bulk_update(self):
+        # update the existing MoleculeModel records with new molecule data
+        records = [m for m in MoleculeModel.objects.all()]
+
+        for record, new_smiles in zip(records, SMILES_SAMPLE[len(records):2*len(records)]):
+            record.molecule = new_smiles
+
+        MoleculeModel.objects.bulk_update(records, ['molecule'])
 
 
 class RxnFieldTest(TestCase):
