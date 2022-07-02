@@ -34,7 +34,7 @@ def runtests():
     parent = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, parent)
 
-    sys.exit(call_command('test', 'tests'))
+    sys.exit(call_command('test', 'tests', *sys.argv[1:]))
 
 if __name__ == '__main__':
     runtests()
