@@ -96,7 +96,9 @@ class MolFieldTest(TestCase):
         self.assertAlmostEqual(aggr['avg_amw'], 236.874, 3)
 
         aggr = MoleculeModel.objects.aggregate(sum_amw=Sum(AMW('molecule')))
-        self.assertAlmostEqual(aggr['sum_amw'], 23687.4, 3)
+        # mol_amw is returned by the cartridge as a single precision float
+        # and the sum aggregate returns the same precision
+        self.assertAlmostEqual(aggr['sum_amw'], 23687.4, 1)
 
         aggr = MoleculeModel.objects.aggregate(max_amw=Max(AMW('molecule')))
         self.assertAlmostEqual(aggr['max_amw'], 836.468, 3)
