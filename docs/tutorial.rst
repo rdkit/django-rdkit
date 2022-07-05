@@ -386,7 +386,8 @@ The following demonstrate a basic similarity search::
   
   In [4]: value = MORGANBV_FP(Value(smiles))
   
-  In [5]: Compound.objects.filter(mfp2__tanimoto=value).count()Out[6]: 67
+  In [5]: Compound.objects.filter(mfp2__tanimoto=value).count()
+  Out[6]: 67
 
 Following the original tutorial from the RDKit documentation, the next step consists in implementing a query to return the sorted list of neighbors along with the accompanying SMILES::
 
