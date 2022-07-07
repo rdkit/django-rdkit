@@ -14,13 +14,14 @@ DEFAULT_SETTINGS = dict(
     DATABASES={
         "default": {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'test',
-            'USER': '',
-            'PASSWORD': '',
-            'HOST': '',
-            'PORT': '',
+            'NAME': os.environ.get('DJANGO_DB', 'test'),
+            'USER': os.environ.get('DJANGO_USER', ''),
+            'PASSWORD': os.environ.get('DJANGO_PASSWORD', ''),
+            'HOST': os.environ.get('DATABASE_HOST', ''),
+            'PORT': os.environ.get('DATABASE_PORT', ''),
         }
     },
+    DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
 )
 
 
@@ -33,7 +34,7 @@ def runtests():
     parent = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, parent)
 
-    sys.exit(call_command('test', 'tests'))
+    sys.exit(call_command('test', 'tests', *sys.argv[1:]))
 
 if __name__ == '__main__':
     runtests()

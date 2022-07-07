@@ -1,6 +1,6 @@
 from django import VERSION as DJANGO_VERSION
 from django.utils.translation import gettext_lazy as _
-from django.db.models import Lookup, Transform, Func
+from django.db.models import Lookup, Transform, Func, Value
 from django.db.models.fields import *
 from django.core.exceptions import ValidationError
 from django import forms
@@ -59,9 +59,7 @@ class MolField(Field):
             value = self.text_to_mol(value)
         if isinstance(value, Chem.Mol):
             value = memoryview(value.ToBinary())
-        if value is None:
-            return None
-        return Func(value, function='mol_from_pkl')
+        return value
 
     @staticmethod
     def text_to_mol(value):
@@ -203,6 +201,18 @@ class SfpField(Field):
 ###################################################################
 # MolField/RxnField lookup operations, substruct and exact searches
 
+class MolLookupMixin:
+
+    def get_prep_lookup(self):
+        if self.rhs_is_direct_value():
+            if isinstance(self.rhs, Chem.Mol):
+                self.rhs = self.rhs.ToBinary()
+                self.rhs = Func(self.rhs, function='mol_from_pkl')
+            else:
+                self.rhs = Value(self.rhs)
+        return super().get_prep_lookup()
+
+
 class HasSubstruct(Lookup):
 
     lookup_name = 'hassubstruct'
@@ -215,7 +225,10 @@ class HasSubstruct(Lookup):
         return '%s @> %s' % (lhs, rhs), params
 
 
-MolField.register_lookup(HasSubstruct)
+class HasMolSubstruct(MolLookupMixin, HasSubstruct):
+    pass
+
+MolField.register_lookup(HasMolSubstruct)
 RxnField.register_lookup(HasSubstruct)
 
 
@@ -244,7 +257,10 @@ class IsSubstruct(Lookup):
         params = lhs_params + rhs_params
         return '%s <@ %s' % (lhs, rhs), params
 
-MolField.register_lookup(IsSubstruct)
+class IsMolSubstruct(MolLookupMixin, IsSubstruct):
+    pass
+
+MolField.register_lookup(IsMolSubstruct)
 RxnField.register_lookup(IsSubstruct)
 
 
@@ -261,7 +277,7 @@ class IsSubstructFP(Lookup):
 RxnField.register_lookup(IsSubstructFP)
 
 
-class SameStructure(Lookup):
+class SameStructure(MolLookupMixin, Lookup):
 
     lookup_name = 'exact'
     prepare_rhs = True
