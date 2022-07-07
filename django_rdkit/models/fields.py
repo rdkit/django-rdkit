@@ -1,4 +1,3 @@
-from django import VERSION as DJANGO_VERSION
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Lookup, Transform, Func, Value
 from django.db.models.fields import *
@@ -24,13 +23,7 @@ class MolField(Field):
 
     def get_placeholder(self, value, compiler, connection):
         if hasattr(value, 'as_sql'):
-            if DJANGO_VERSION > (2,):
-                return '%s'
-            else:
-                # No value used for expressions, substitute in
-                # the column name instead.
-                sql, _ = compiler.compile(value)
-                return sql
+            return '%s'
         else:
             return 'mol_from_pkl(%s)'
 
@@ -139,13 +132,7 @@ class BfpField(Field):
 
     def get_placeholder(self, value, compiler, connection):
         if hasattr(value, 'as_sql'):
-            if DJANGO_VERSION > (2,):
-                return '%s'
-            else:
-                # No value used for expressions, substitute in
-                # the column name instead.
-                sql, _ = compiler.compile(value)
-                return sql
+            return '%s'
         else:
             return 'bfp_from_binary_text(%s)'
 
