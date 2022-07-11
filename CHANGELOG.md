@@ -1,3 +1,10 @@
+## [0.4.0]
+
+### Added
+- `Mol` data can be now transferred to/from the database as either binary or text, depending on the
+  value assigned to the `DJANGO_RDKIT_MOL_SERIALIZATION` settings attribute (allowed values are
+  `BINARY` and `TEXT`, defaults to `BINARY`)
+
 ## [0.3.2]
 
 ### Fixed
