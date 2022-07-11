@@ -1,8 +1,11 @@
+from enum import Enum
+
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Lookup, Transform, Func, Value
 from django.db.models.fields import *
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django import forms
+from django.conf import settings
 
 from rdkit.Chem import AllChem as Chem
 from rdkit import DataStructs
@@ -14,28 +17,88 @@ __all__ = ["MolField", "RxnField", "BfpField", "SfpField",]
 ##########################################
 # Molecule Field
 
-class MolField(Field):
+class MolSerialization(Enum):
+    BINARY = 'BINARY'
+    TEXT = 'TEXT'
 
-    description = _("Molecule")
+try:
+    MOL_SERIALIZATION = MolSerialization(
+        getattr(settings, 'DJANGO_RDKIT_MOL_SERIALIZATION', 'BINARY')
+        )
+except ValueError:
+    raise ImproperlyConfigured(
+        'An invalid DJANGO_RDKIT_MOL_SERIALIZATION value was found in the settings. '
+        f'Supported values are {[v.value for v in MolSerialization]}'
+        )
 
-    def db_type(self, connection):
-        return 'mol'
+
+class MolFieldPklMixin:
 
     def get_placeholder(self, value, compiler, connection):
+        # define if/how the value assigned to this field is
+        # to be wrapped into an insertion query
         if hasattr(value, 'as_sql'):
             return '%s'
         else:
             return 'mol_from_pkl(%s)'
 
     def select_format(self, compiler, sql, params):
+        # format to use when the corresponding column appears
+        # in select clauses.
         return 'mol_to_pkl(%s)' % sql, params
 
     def from_db_value(self, value, expression, connection):
+        # convert the value returned by the database driver
+        # into the desired Python data type
         if value is None:
             return value
         return Chem.Mol(bytes(value))
 
+    def get_prep_value(self, value):
+        # convert from Python to the value to be used in queries
+        if isinstance(value, str):
+            value = self.text_to_mol(value)
+        if isinstance(value, Chem.Mol):
+            value = memoryview(value.ToBinary())
+        return value
+
+
+class MolFieldSmilesMixin:
+
+    def from_db_value(self, value, expression, connection):
+        # convert the value returned by the database driver
+        # into the desired Python data type
+        if value is None:
+            return value
+        return Chem.MolFromSmiles(value)
+
+    def get_prep_value(self, value):
+        # convert from Python to the value to be used in queries
+        if isinstance(value, str):
+            value = self.text_to_mol(value)
+        if isinstance(value, Chem.Mol):
+            value = Chem.MolToSmiles(value)
+        return value
+
+
+MolFieldSerializationMixin = {
+    MolSerialization.BINARY: MolFieldPklMixin,
+    MolSerialization.TEXT: MolFieldSmilesMixin,
+}[MOL_SERIALIZATION]
+
+
+class MolField(MolFieldSerializationMixin, Field):
+
+    description = _("Molecule")
+
+    def db_type(self, connection):
+        # return the database column data type for this field
+        return 'mol'
+
     def to_python(self, value):
+        # convert the input value into the expected Python data
+        # types (called during input cleanup and prior to field
+        # validation)
         if value is None or isinstance(value, Chem.Mol):
             return value
         elif isinstance(value, str):
@@ -44,15 +107,6 @@ class MolField(Field):
             return Chem.Mol(bytes(value))
         else:
             raise ValidationError("Invalid input for a Mol instance")
-
-    def get_prep_value(self, value):
-        # convert the Molecule instance to the value used by the
-        # db driver
-        if isinstance(value, str):
-            value = self.text_to_mol(value)
-        if isinstance(value, Chem.Mol):
-            value = memoryview(value.ToBinary())
-        return value
 
     @staticmethod
     def text_to_mol(value):
@@ -193,8 +247,16 @@ class MolLookupMixin:
     def get_prep_lookup(self):
         if self.rhs_is_direct_value():
             if isinstance(self.rhs, Chem.Mol):
-                self.rhs = self.rhs.ToBinary()
-                self.rhs = Func(self.rhs, function='mol_from_pkl')
+                if MOL_SERIALIZATION == MolSerialization.BINARY:
+                    self.rhs = self.rhs.ToBinary()
+                    self.rhs = Func(self.rhs, function='mol_from_pkl')
+                elif MOL_SERIALIZATION == MolSerialization.TEXT:
+                    self.rhs = Value(Chem.MolToSmiles(self.rhs))
+                else:
+                    # this should never happen, because
+                    # MOL_SERIALIZATION is validated at
+                    # import time
+                    raise NotImplementedError
             else:
                 self.rhs = Value(self.rhs)
         return super().get_prep_lookup()
