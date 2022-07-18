@@ -19,6 +19,7 @@ Contents:
    lookups
    functions
    guc
+   settings
 
 Indices and tables
 ==================
