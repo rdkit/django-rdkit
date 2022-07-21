@@ -22,6 +22,8 @@ DEFAULT_SETTINGS = dict(
         }
     },
     DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
+
+    DJANGO_RDKIT_MOL_SERIALIZATION=os.environ.get('DJANGO_RDKIT_MOL_SERIALIZATION', 'BINARY'),
 )
 
 
