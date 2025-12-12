@@ -373,6 +373,26 @@ class BfpFieldTest3(TestCase):
                              list(obfp.GetOnBits()))
 
 
+class DistanceExpressionTest(TestCase):
+    """Test TANIMOTO_DIST and DICE_DIST distance expressions."""
+
+    def setUp(self):
+        for smiles in SMILES_SAMPLE:
+            record = BfpModel.objects.create()
+            record.bfp = MORGANBV_FP(Value(smiles))
+            record.save()
+
+    def test_tanimoto_dist_order_by(self):
+        query_bfp = MORGANBV_FP(Value('CCN1c2ccccc2Sc2ccccc21'))
+        objs = list(BfpModel.objects.order_by(TANIMOTO_DIST('bfp', query_bfp))[:5])
+        self.assertEqual(len(objs), 5)
+
+    def test_dice_dist_order_by(self):
+        query_bfp = MORGANBV_FP(Value('CCN1c2ccccc2Sc2ccccc21'))
+        objs = list(BfpModel.objects.order_by(DICE_DIST('bfp', query_bfp))[:5])
+        self.assertEqual(len(objs), 5)
+
+
 class SfpFieldTest1(TestCase):
 
     def setUp(self):

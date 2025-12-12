@@ -151,11 +151,11 @@ class DistanceExpression(Expression):
         self.lhs, self.rhs = exprs
 
     def resolve_expression(self, query=None,
-                           allow_joins=True, reuse=None, summarize=False):
+                           allow_joins=True, reuse=None, summarize=False, for_save=False):
         c = self.copy()
         c.is_summary = summarize
-        c.lhs = self.lhs.resolve_expression(query, allow_joins, reuse, summarize)
-        c.rhs = self.rhs.resolve_expression(query, allow_joins, reuse, summarize)
+        c.lhs = self.lhs.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+        c.rhs = self.rhs.resolve_expression(query, allow_joins, reuse, summarize, for_save)
         return c
 
     def as_sql(self, compiler, connection):
