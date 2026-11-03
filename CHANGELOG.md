@@ -1,3 +1,9 @@
+## [0.4.1]
+
+### Fixed
+- Restored exact structure lookup (using @= instead of a combination of @> and <@)
+- Django 5.2 compatibility issue (signature of `DistanceExpression.resolve_expression`)
+
 ## [0.4.0]
 
 ### Added
