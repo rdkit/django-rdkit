@@ -4,6 +4,7 @@ _PARAMETERS = (
     'tanimoto_threshold',
     'dice_threshold',
     'do_chiral_sss',
+    'do_enhanced_stereo_sss',
     'sss_fp_size',
     'morgan_fp_size',
     'featmorgan_fp_size',
